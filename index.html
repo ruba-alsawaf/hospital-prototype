@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تطبيق القسم – نموذج تجريبي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface-2:#F3FAFE;
+  --ink:#1B3A4F;
+  --ink-2:#55707F;
+  --line:#D3EAF6;
+  --primary:#0277BD;
+  --primary-ink:#FFFFFF;
+  --primary-soft:#E1F5FE;
+  --head-bg:#E1F5FE;
+  --head-ink:#01579B;
+  --alert:#B42318;
+  --alert-soft:#FDE8E6;
+  --amber:#9A4A06;
+  --amber-soft:#FCEFD9;
+  --ok:#1D6B3A;
+  --ok-soft:#E1F2E6;
+  --board:#E1F5FE;
+  --board-ink:#01579B;
+  --shadow:0 1px 3px rgba(2,119,189,.08);
+  --font:"IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--head-bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+.demo{background:var(--amber-soft);color:var(--amber);font-size:13px;padding:6px 16px;text-align:center}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:7;background:var(--head-bg);color:var(--head-ink);padding:0 12px;display:flex;align-items:center;gap:10px;height:64px}
+.top h1{font-size:18px;margin:0;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sub{font-size:13px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top{border-bottom:1px solid #B3E5FC}
+.top .iconbtn,.top .rolebtn{background:#FFFFFF;border-color:#B3E5FC;color:var(--head-ink)}
+.top .grow{flex:1;min-width:0}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn svg{width:22px;height:22px}
+.rolebtn{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:44px;white-space:nowrap}
+
+main{flex:1;padding:14px 14px 110px}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:9px 6px;cursor:pointer;font-weight:500;min-height:44px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);font-weight:600}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;margin-bottom:12px}
+.search svg{width:20px;height:20px;color:var(--ink-2);flex:none}
+.search input{border:0;outline:0;background:transparent;padding:12px 0;width:100%}
+
+/* bed token – the ward board */
+.bed{flex:none;min-width:56px;height:56px;border-radius:10px;background:var(--board);color:var(--board-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;padding:0 6px}
+.bed small{font-size:10px;opacity:.75;line-height:1}
+.bed b{font-size:19px;line-height:1.2;letter-spacing:.5px;direction:ltr}
+.bed.lg{min-width:72px;height:72px;border-radius:12px}
+.bed.lg b{font-size:24px}
+.bed.off{background:var(--surface-2);color:var(--ink-2);border:1px dashed var(--line)}
+
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:start;width:100%;cursor:pointer}
+.row .info{flex:1;min-width:0}
+.row .name{font-weight:600;font-size:16px}
+.row .meta{font-size:13px;color:var(--ink-2)}
+.row .blk{display:block}
+.row .dx{display:block;font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .name,.row .meta{display:inline}
+.flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:12px;border-radius:999px;padding:2px 9px;font-weight:500;white-space:nowrap}
+.tag.alert{background:var(--alert-soft);color:var(--alert)}
+.tag.amber{background:var(--amber-soft);color:var(--amber)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.muted{background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+.empty{text-align:center;color:var(--ink-2);padding:40px 16px}
+
+.fab{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));inset-inline-start:50%;transform:translateX(50%);background:var(--primary);color:var(--primary-ink);border:0;border-radius:999px;padding:14px 22px;font-weight:600;box-shadow:0 4px 14px rgba(2,119,189,.28);cursor:pointer;display:flex;gap:8px;align-items:center;z-index:4}
+.fab svg{width:20px;height:20px}
+
+/* patient header */
+.phead{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;gap:14px;align-items:flex-start}
+.phead .name{font-size:20px;font-weight:700;line-height:1.35}
+.phead .meta{font-size:14px;color:var(--ink-2)}
+.allergy{margin-top:10px;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;font-weight:600;background:var(--alert);color:#fff}
+.allergy svg{width:20px;height:20px;flex:none}
+.allergy.none{background:var(--surface-2);color:var(--ink-2);font-weight:400;border:1px solid var(--line)}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:6px -14px 12px;padding:8px 14px;scrollbar-width:none;position:sticky;top:calc(64px + env(safe-area-inset-top,0px));z-index:5;background:var(--ground)}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;cursor:pointer;min-height:44px;color:var(--ink-2);font-weight:500}
+.tabs button[aria-selected="true"]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.tabs .n{font-size:12px;background:var(--amber);color:#fff;border-radius:999px;padding:0 7px;margin-inline-start:6px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.card h3{margin:0 0 6px;font-size:14px;color:var(--ink-2);font-weight:600}
+.card p{margin:0;white-space:pre-wrap}
+.dl{display:grid;grid-template-columns:minmax(96px,auto) 1fr;gap:8px 14px;margin:0}
+.dl dt{color:var(--ink-2);font-size:14px}
+.dl dd{margin:0;white-space:pre-wrap}
+.dl dd.none{color:var(--ink-2)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:600;min-height:44px}
+.btn.primary{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn.danger{color:var(--alert);border-color:var(--alert)}
+.btn.block{width:100%}
+
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vcell{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.vcell small{display:block;font-size:12px;color:var(--ink-2)}
+.vcell b{font-size:20px;font-variant-numeric:tabular-nums;direction:ltr;display:inline-block}
+.vcell.bad{background:var(--alert-soft)}
+.vcell.bad b{color:var(--alert)}
+.vlist{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.vlist th{font-weight:500;color:var(--ink-2);text-align:start;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.vlist td{padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.vlist td.bad{color:var(--alert);font-weight:700}
+.scroll{overflow-x:auto}
+
+.tl{position:relative;padding-inline-start:18px}
+.tl::before{content:"";position:absolute;inset-inline-start:5px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl .item{position:relative;margin-bottom:12px}
+.tl .item::before{content:"";position:absolute;inset-inline-start:-17px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--primary)}
+.when{font-size:13px;color:var(--ink-2)}
+
+.order .top-line{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.order .kind{font-weight:700}
+.order .req{background:var(--surface-2);border-radius:10px;padding:10px;margin:8px 0}
+.order .resp{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumb{width:84px;height:84px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:var(--surface-2);padding:0;cursor:pointer}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.file{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--ink-2);padding:6px;text-align:center;cursor:default}
+.thumb.file b{font-size:14px;color:var(--alert)}
+
+/* login */
+.hero{padding:28px 6px 10px}
+.hero h2{font-size:26px;margin:0 0 6px;line-height:1.3}
+.hero p{margin:0;color:var(--ink-2)}
+.roles{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.role{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;text-align:start;width:100%}
+.role .ic{width:48px;height:48px;border-radius:12px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;flex:none}
+.role .ic svg{width:26px;height:26px}
+.role b{display:block;font-size:17px}
+.role span{font-size:14px;color:var(--ink-2)}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(10,20,18,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h2{margin:0 0 12px;font-size:19px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-size:14px;font-weight:500}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+.field textarea{min-height:80px;resize:vertical}
+.field .hint{font-size:12px;color:var(--ink-2)}
+.field.err input{border-color:var(--alert)}
+.errmsg{color:var(--alert);font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;cursor:pointer;min-height:40px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+details.more{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+details.more summary{cursor:pointer;font-weight:600}
+.sheet-actions{display:flex;gap:8px;margin-top:8px}
+.sheet-actions .btn{flex:1}
+
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
+.lightbox button{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));inset-inline-start:14px}
+.qbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 -2px 12px rgba(15,36,64,.07)}
+.qbar button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;cursor:pointer;color:var(--primary);font-size:13px;font-weight:600;border-radius:12px}
+.qbar button:active{background:var(--primary-soft)}
+.qbar svg{width:26px;height:26px}
+.pick{display:grid;gap:10px;margin-bottom:8px}
+.pick .btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:60px;font-size:18px}
+.pick svg{width:24px;height:24px}
+.toast{position:fixed;bottom:calc(96px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:10px 18px;border-radius:999px;z-index:40;font-size:14px}
+@media (prefers-reduced-motion: no-preference){
+  .sheet{animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="demo" role="note">نموذج للعرض: كل البيانات وهمية، وأي تعديل بيروح لما تسكّر الصفحة.</div>
+  <header class="top" id="top"></header>
+  <main id="main"></main>
+</div>
+<div id="layer"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NOW = Date.now();
+const H = 3600e3, D = 24*H;
+const fmtDT = new Intl.DateTimeFormat('ar-u-nu-latn', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+const fmtD = new Intl.DateTimeFormat('ar-u-nu-latn', {day:'numeric', month:'long', year:'numeric'});
+const dt = t => fmtDT.format(new Date(t));
+const d = t => fmtD.format(new Date(t));
+function ago(t){
+  const m = Math.round((Date.now()-t)/60000);
+  if (m < 1) return 'هلق';
+  if (m < 60) return 'من ' + m + ' دقيقة';
+  const h = Math.round(m/60);
+  if (h < 24) return 'من ' + h + ' ساعة';
+  const dd = Math.round(h/24);
+  return dd === 1 ? 'مبارح' : 'من ' + dd + ' أيام';
+}
+function age(b){ if(!b) return null; const x = new Date(b); const n = new Date(); let a = n.getFullYear()-x.getFullYear(); if (n < new Date(n.getFullYear(), x.getMonth(), x.getDate())) a--; return a; }
+const dayNo = t => Math.floor((Date.now()-t)/D)+1;
+const icon = {
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>',
+  steth:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v5a4 4 0 008 0V3"/><path d="M10 12v3a5 5 0 0010 0v-2"/><circle cx="20" cy="11" r="2"/></svg>',
+  tube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v13a2 2 0 004 0V3"/><path d="M10 11h4"/></svg>',
+  xray:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 6v12M8 9h8M7.5 12h9M8 15h8"/></svg>',
+  mask:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9c3-2 13-2 16 0v4c0 4-4 6-8 6s-8-2-8-6z"/><path d="M8 12h8"/></svg>',
+  pulse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>',
+  note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>',
+  hand:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+
+/* ---------- fake images ---------- */
+function svgURI(s){ return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s); }
+function labReport(name, rows){
+  const lines = rows.map((r,i)=>`<text x="370" y="${150+i*34}" font-size="18" text-anchor="end">${esc(r[0])}</text><text x="160" y="${150+i*34}" font-size="18" text-anchor="middle" font-weight="700" fill="${r[2]?'#B42318':'#15302A'}">${esc(r[1])}</text><text x="40" y="${150+i*34}" font-size="13" fill="#6B7C78">${esc(r[3]||'')}</text>`).join('');
+  return svgURI(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="${190+rows.length*34}" font-family="Tahoma, sans-serif"><rect width="100%" height="100%" fill="#fff"/><rect width="100%" height="56" fill="#0E6B5B"/><text x="370" y="36" fill="#fff" font-size="20" text-anchor="end" font-weight="700">تقرير مخبري (توضيحي)</text><text x="370" y="92" font-size="16" text-anchor="end" fill="#4A5E59">${esc(name)}</text><line x1="30" x2="370" y1="112" y2="112" stroke="#D5E0DC"/>${lines}</svg>`);
+}
+function xrayImg(label){
+  return svgURI(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="440" font-family="Tahoma, sans-serif"><rect width="100%" height="100%" fill="#0b0d0e"/><ellipse cx="140" cy="210" rx="78" ry="130" fill="#2b3134"/><ellipse cx="260" cy="210" rx="78" ry="130" fill="#2b3134"/><rect x="190" y="70" width="20" height="300" rx="8" fill="#8a9396"/>${[0,1,2,3,4,5,6].map(i=>`<path d="M200 ${110+i*32} q-90 -10 -130 30 M200 ${110+i*32} q90 -10 130 30" stroke="#6f787b" stroke-width="7" fill="none"/>`).join('')}<text x="200" y="420" fill="#cfd6d8" font-size="15" text-anchor="middle">${esc(label)} – صورة توضيحية</text></svg>`);
+}
+
+/* ---------- fake data ---------- */
+const DEPTS = {
+  1:{id:1, name:'الجراحة العامة', type:'clinical'},
+  2:{id:2, name:'التخدير والعناية', type:'clinical'},
+  3:{id:3, name:'المخبر', type:'lab'},
+  4:{id:4, name:'الأشعة', type:'radiology'}
+};
+const USERS = {
+  1:{id:1, name:'د. سامر الخطيب', role:'doctor', dept:1},
+  2:{id:2, name:'د. لينا حداد', role:'doctor', dept:1},
+  3:{id:3, name:'د. رامي العلي', role:'doctor', dept:2},
+  4:{id:4, name:'عبير – المخبر', role:'lab', dept:3},
+  5:{id:5, name:'وسيم – الأشعة', role:'radiology', dept:4}
+};
+const ROLE_CARDS = [
+  {user:1, title:'طبيب جراحة', desc:'مرضى قسم الجراحة العامة', ic:'steth'},
+  {user:3, title:'طبيب تخدير وعناية', desc:'مرضى قسم التخدير والعناية', ic:'mask'},
+  {user:4, title:'المخبر', desc:'طلبات التحاليل الواردة', ic:'tube'},
+  {user:5, title:'الأشعة', desc:'طلبات الأشعة الواردة', ic:'xray'}
+];
+
+let seq = 100;
+const id = () => ++seq;
+const P = [];
+function addP(o){ const p = Object.assign({id:id(), status:'admitted', vitals:[], notes:[], procedures:[], phone:'', chronic_diseases:'', surgical_history:'', allergies:'', medications:'', family_history:'', social_history:'', discharge_summary:'', discharged_at:null}, o); P.push(p); return p; }
+
+const p1 = addP({dept:1, file_number:'241187', full_name:'خالد محمود السيد', gender:'male', birth_date:'1981-03-14', admission_date:NOW-2*D, bed_number:'A-3', attending:1, admission_diagnosis:'التهاب زائدة دودية حاد، استئصال زائدة بالتنظير', chronic_diseases:'سكري نمط 2', medications:'ميتفورمين 500 ملغ مرتين يومياً', allergies:'بنسلين', social_history:'مدخن، علبة يومياً'});
+const p2 = addP({dept:1, file_number:'241192', full_name:'سلمى فؤاد ناصر', gender:'female', birth_date:'1967-08-02', admission_date:NOW-4*D, bed_number:'A-5', attending:2, admission_diagnosis:'التهاب مرارة حاد مع حصيات، بانتظار استئصال مرارة', chronic_diseases:'ارتفاع ضغط', medications:'أملوديبين 5 ملغ', surgical_history:'قيصرية 1998'});
+const p3 = addP({dept:1, file_number:'241203', full_name:'يوسف جميل حمدان', gender:'male', birth_date:'1955-11-20', admission_date:NOW-1*D, bed_number:'B-1', attending:1, admission_diagnosis:'انسداد أمعاء دقيقة، تدبير محافظ', chronic_diseases:'قصور قلب، رجفان أذيني', medications:'وارفارين، بيسوبرولول', surgical_history:'استئصال كولون جزئي 2019', allergies:'سلفا'});
+const p4 = addP({dept:1, file_number:'241206', full_name:'ريم عادل قاسم', gender:'female', birth_date:'1994-05-09', admission_date:NOW-1*D, bed_number:'B-4', attending:2, admission_diagnosis:'خراج حول الشرج، تفجير وتصريف'});
+const p5 = addP({dept:1, file_number:'241210', full_name:'محمود طلال عيسى', gender:'male', birth_date:'1972-01-30', admission_date:NOW-6*H, bed_number:'B-6', attending:1, admission_diagnosis:'فتق إربي أيمن مختنق، للعمليات اليوم', allergies:'لاتكس', family_history:'سرطان كولون عند الأب'});
+const p6 = addP({dept:1, file_number:'241175', full_name:'نادية سليم بركات', gender:'female', birth_date:'1960-07-17', admission_date:NOW-7*D, bed_number:'C-2', attending:2, admission_diagnosis:'التهاب بنكرياس حاد حصوي', chronic_diseases:'قصور درق', medications:'ليفوثيروكسين 75 مكغ'});
+const p7 = addP({dept:1, file_number:'241150', full_name:'عمر وليد شاهين', gender:'male', birth_date:'1988-12-03', admission_date:NOW-9*D, bed_number:'C-4', attending:1, admission_diagnosis:'قرحة اثني عشرية مثقوبة، خياطة قرحة', status:'discharged', discharged_at:NOW-2*D, discharge_summary:'خرج بحالة جيدة، مثبطات مضخة بروتون 8 أسابيع، مراجعة العيادة بعد أسبوعين لفك القطب.'});
+const p8 = addP({dept:2, file_number:'241199', full_name:'فاطمة حسن العمر', gender:'female', birth_date:'1949-04-25', admission_date:NOW-3*D, bed_number:'ICU-2', attending:3, admission_diagnosis:'صدمة إنتانية بعد استئصال كولون إسعافي، على منفسة', chronic_diseases:'سكري، قصور كلوي مزمن', medications:'إنسولين', allergies:'فانكومايسين (طفح)'});
+const p9 = addP({dept:2, file_number:'241201', full_name:'جورج إلياس منصور', gender:'male', birth_date:'1958-10-11', admission_date:NOW-2*D, bed_number:'ICU-4', attending:3, admission_diagnosis:'مراقبة بعد استئصال طحال رضّي', social_history:'كحول بشكل اجتماعي'});
+const p10 = addP({dept:2, file_number:'241209', full_name:'هبة مروان دياب', gender:'female', birth_date:'1990-02-19', admission_date:NOW-10*H, bed_number:'ICU-1', attending:3, admission_diagnosis:'نزف بعد الولادة، نقل دم، مراقبة', surgical_history:'قيصرية 2021'});
+
+function V(p, hAgo, sys, dia, hr, rr, t, spo2, glu, by){ p.vitals.push({id:id(), at:NOW-hAgo*H, sys, dia, hr, rr, t, spo2, glu, by}); }
+V(p1,1,128,82,88,16,37.4,97,182,1); V(p1,8,135,85,96,18,38.1,96,210,2); V(p1,20,130,80,92,18,37.8,97,195,1);
+V(p2,2,142,90,78,16,37.0,98,null,2); V(p2,14,150,94,84,18,37.9,97,null,2);
+V(p3,1,104,66,112,22,37.2,94,null,1); V(p3,6,110,70,104,20,37.0,95,null,1);
+V(p4,3,118,74,80,14,36.9,99,null,2);
+V(p5,1,138,86,98,18,37.1,98,null,1);
+V(p6,4,120,76,90,18,37.6,96,null,2);
+V(p8,1,92,54,118,24,38.6,91,240,3); V(p8,3,88,50,124,26,38.9,90,265,3); V(p8,6,95,58,115,22,38.4,92,220,3);
+V(p9,2,116,72,94,16,37.0,98,null,3);
+V(p10,1,102,64,108,18,36.8,97,null,3);
+
+function N(p, hAgo, by, text){ p.notes.push({id:id(), at:NOW-hAgo*H, by, text}); }
+N(p1,3,1,'اليوم الثاني بعد العملية. ألم خفيف بمكان الجرح، بدأ سوائل صافية وتحملها. السكر مرتفع، تعديل الإنسولين حسب الجدول.');
+N(p1,22,2,'ارتفاع حرارة ليلي 38.1، فحص الجرح نظيف. طلب CBC و CRP.');
+N(p2,5,2,'ألم المراق الأيمن أخف. تحاليل الكبد بتتحسن. مبرمجة للاستئصال بكرا الصبح، صيام من منتصف الليل.');
+N(p3,2,1,'لسا ما في غازات. الأنبوب الأنفي المعدي مصرّف 600 مل. INR مرتفع، إيقاف الوارفارين.');
+N(p8,1,3,'على نورأدرينالين 0.15، المرضى على منفسة FiO2 50%. زرع دم أُخذ، تغيير المضاد الحيوي لميروبينيم.');
+N(p9,4,3,'مستقر هيموديناميكياً، الخضاب ثابت. خطة لفصل المنفسة اليوم.');
+
+function PR(p, hAgo, by, type, notes){ p.procedures.push({id:id(), at:NOW-hAgo*H, by, type, notes}); }
+PR(p1,30,1,'فتح وريد','قنية 18G باليد اليسرى');
+PR(p3,7,1,'أنبوب أنفي معدي','رقم 16، تأكيد الموضع بالشفط');
+PR(p3,7,1,'قثطرة بولية','فولي 16، بول صافي');
+PR(p8,50,3,'خط وريدي مركزي','الوداجي الأيمن بتوجيه الإيكو');
+PR(p8,20,3,'غسيل كلى','جلسة CRRT، 4 ساعات');
+PR(p10,8,3,'نقل دم','وحدتين كريات حمراء مركزة');
+
+const O = [];
+function addO(o){ const x = Object.assign({id:id(), status:'pending', priority:'normal', request_text:'', request_files:[], response_text:'', response_files:[], responded_by:null, completed_at:null, seen:true}, o); O.push(x); return x; }
+addO({patient:p1.id, type:'lab', by:2, at:NOW-21*H, priority:'normal', request_text:'CBC، CRP، سكر صيامي', status:'completed', responded_by:4, completed_at:NOW-18*H, response_text:'ارتفاع خفيف بالكريات البيض و CRP.', response_files:[{name:'نتيجة-CBC.png', kind:'image', src:labReport('خالد محمود السيد – 241187', [['WBC','13.2',true,'4–11'],['Hb','13.8',false,'13–17'],['PLT','265',false,'150–400'],['CRP','48',true,'<5'],['سكر صيامي','198',true,'70–100']])}], seen:true});
+addO({patient:p1.id, type:'lab', by:1, at:NOW-2*H, priority:'normal', request_text:'كهارل وكرياتينين', status:'pending'});
+addO({patient:p2.id, type:'radiology', by:2, at:NOW-30*H, request_text:'إيكو بطن، تقييم المرارة والطرق الصفراوية', status:'completed', responded_by:5, completed_at:NOW-26*H, response_text:'مرارة متسمكة الجدار مع حصيات متعددة، أكبرها 1.8 سم. القناة الجامعة غير متوسعة (6 مم).', response_files:[{name:'تقرير-الإيكو.pdf', kind:'pdf'}], seen:true});
+addO({patient:p3.id, type:'radiology', by:1, at:NOW-50*60e3, priority:'urgent', request_text:'صورة بطن بسيطة واقفة', status:'pending'});
+addO({patient:p3.id, type:'lab', by:1, at:NOW-3*H, priority:'urgent', request_text:'INR، كهارل، CBC', status:'completed', responded_by:4, completed_at:NOW-1*H, response_text:'INR مرتفع 3.4، البوتاسيوم منخفض.', response_files:[{name:'نتيجة.png', kind:'image', src:labReport('يوسف جميل حمدان – 241203', [['INR','3.4',true,'0.8–1.2'],['K','3.1',true,'3.5–5.1'],['Na','137',false,'135–145'],['WBC','9.8',false,'4–11'],['Hb','12.1',true,'13–17']])}], seen:false});
+addO({patient:p5.id, type:'lab', by:1, at:NOW-5*H, priority:'urgent', request_text:'تحاليل ما قبل العملية: CBC، PT/INR، زمرة وتصالب', status:'pending'});
+addO({patient:p8.id, type:'radiology', by:3, at:NOW-4*H, priority:'urgent', request_text:'صورة صدر بالسرير، تأكيد موضع الأنبوب والخط المركزي', status:'completed', responded_by:5, completed_at:NOW-3*H, response_text:'الأنبوب الرغامي فوق الجؤجؤ بـ 4 سم، الخط المركزي بموضعه. ارتشاحات قاعدية يمنى.', response_files:[{name:'صدر-محمول.png', kind:'image', src:xrayImg('صورة صدر')}], seen:false});
+addO({patient:p8.id, type:'lab', by:3, at:NOW-40*60e3, priority:'urgent', request_text:'غازات دم شرياني، لاكتات', status:'pending'});
+addO({patient:p6.id, type:'lab', by:2, at:NOW-6*H, request_text:'أميلاز، ليباز، وظائف كبد', status:'pending'});
+
+/* ---------- state ---------- */
+const S = { user:null, stack:[], tab:'admitted', search:'', ptab:'file', qtab:'pending' };
+const me = () => USERS[S.user];
+const isDoc = () => me()?.role === 'doctor';
+const view = () => S.stack[S.stack.length-1] || {name:'login'};
+function go(v){ S.stack.push(v); render(); window.scrollTo(0,0); }
+function back(){ S.stack.pop(); render(); }
+const pById = i => P.find(p => p.id === +i);
+const oById = i => O.find(o => o.id === +i);
+const ordersOf = p => O.filter(o => o.patient === p.id).sort((a,b)=>b.at-a.at);
+const newResults = p => ordersOf(p).filter(o => o.status==='completed' && !o.seen).length;
+const pendingOf = p => ordersOf(p).filter(o => o.status==='pending').length;
+
+function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2200); }
+
+/* ---------- abnormal flags ---------- */
+const BAD = {
+  sys:v=>v>=160||v<90, dia:v=>v>=100||v<50, hr:v=>v>100||v<50, rr:v=>v>22||v<10,
+  t:v=>v>=38||v<36, spo2:v=>v<92, glu:v=>v>200||v<70
+};
+const isBad = (k,v) => v!=null && v!=='' && BAD[k] && BAD[k](+v);
+
+/* ---------- render ---------- */
+function render(){
+  const v = view();
+  const top = $('#top'), main = $('#main');
+  if (!S.user || v.name==='login'){ top.innerHTML = `<div class="grow"><h1>تطبيق القسم</h1><div class="sub">نموذج تجريبي للعرض</div></div>`; main.innerHTML = loginView(); return; }
+  const canBack = S.stack.length > 1;
+  let title='', sub='';
+  if (v.name==='list'){ title = DEPTS[me().dept].name; sub = me().name; }
+  else if (v.name==='patient'){ const p = pById(v.id); title = p.full_name; sub = 'إضبارة ' + p.file_number; }
+  else if (v.name==='queue'){ title = me().role==='lab' ? 'طلبات المخبر' : 'طلبات الأشعة'; sub = me().name; }
+  else if (v.name==='order'){ const o = oById(v.id); title = (o.type==='lab'?'طلب تحليل':'طلب أشعة') + ' #' + o.id; sub = pById(o.patient).full_name; }
+  top.innerHTML = `${canBack?`<button class="iconbtn" data-a="back" aria-label="رجوع">${icon.back}</button>`:''}
+    <div class="grow"><h1>${esc(title)}</h1><div class="sub">${esc(sub)}</div></div>
+    <button class="rolebtn" data-a="logout">تبديل الدور</button>`;
+  if (v.name==='list') main.innerHTML = listView();
+  else if (v.name==='patient') main.innerHTML = patientView(pById(v.id));
+  else if (v.name==='queue') main.innerHTML = queueView();
+  else if (v.name==='order') main.innerHTML = orderView(oById(v.id));
+}
+
+function loginView(){
+  return `<div class="hero"><h2>مين عم يستخدم التطبيق؟</h2><p>اختار دور لتشوف التطبيق متل ما رح يشوفه. بالنسخة الحقيقية كل واحد بيسجل دخول بحسابه.</p></div>
+  <div class="roles">${ROLE_CARDS.map(r=>`<button class="role" data-a="login" data-id="${r.user}"><span class="ic">${icon[r.ic]}</span><span><b>${esc(r.title)}</b><span>${esc(USERS[r.user].name)} · ${esc(r.desc)}</span></span></button>`).join('')}</div>`;
+}
+
+/* doctor: patient list */
+function listView(){
+  const mine = P.filter(p => p.dept === me().dept);
+  const nA = mine.filter(p=>p.status==='admitted').length, nD = mine.length - nA;
+  return `<div class="search">${icon.search}<label class="sr" for="q">بحث</label><input id="q" type="search" placeholder="بحث بالاسم أو رقم الإضبارة" value="${esc(S.search)}" autocomplete="off"></div>
+  <div class="seg" role="group" aria-label="حالة المرضى">
+    <button data-a="tab" data-id="admitted" aria-pressed="${S.tab==='admitted'}">مقبولين (${nA})</button>
+    <button data-a="tab" data-id="discharged" aria-pressed="${S.tab==='discharged'}">مخرّجين (${nD})</button>
+  </div>
+  <div id="rows" class="rows">${rowsHTML()}</div>
+  <button class="fab" data-a="addPatient">${icon.plus}مريض جديد</button>`;
+}
+function rowsHTML(){
+  const q = S.search.trim();
+  const list = P.filter(p => p.dept===me().dept && p.status===S.tab && (!q || p.full_name.includes(q) || p.file_number.includes(q)))
+    .sort((a,b)=> a.bed_number.localeCompare(b.bed_number, 'en', {numeric:true}));
+  if (!list.length) return `<div class="empty">${q ? 'ما في مريض بهالاسم أو الرقم.' : (S.tab==='admitted' ? 'ما في مرضى مقبولين. زيد مريض من الزر تحت.' : 'ما في مرضى مخرّجين.')}</div>`;
+  return list.map(p => {
+    const a = age(p.birth_date), nr = newResults(p), pd = pendingOf(p);
+    return `<button class="row" data-a="open" data-id="${p.id}">
+      <span class="bed ${p.status==='discharged'?'off':''}"><small>سرير</small><b>${esc(p.bed_number||'–')}</b></span>
+      <span class="info" style="display:block"><span class="name">${esc(p.full_name)}</span>
+        <span class="meta"> · ${esc(p.file_number)}${a!=null?' · '+a+' سنة':''} · ${p.gender==='male'?'ذكر':'أنثى'}</span>
+        <span class="dx">${esc(p.admission_diagnosis||'بدون تشخيص')}</span>
+        <span class="flags">${p.allergies?`<span class="tag alert">حساسية</span>`:''}${nr?`<span class="tag ok">${nr} نتيجة جديدة</span>`:''}${pd?`<span class="tag amber">${pd} بالانتظار</span>`:''}${p.status==='admitted'?`<span class="tag muted">اليوم ${dayNo(p.admission_date)}</span>`:''}</span>
+      </span></button>`;
+  }).join('');
+}
+
+/* doctor: patient file */
+function patientView(p){
+  const a = age(p.birth_date), att = USERS[p.attending];
+  const orders = ordersOf(p), nr = newResults(p);
+  const tabs = [['file','الملف'],['vitals','العلامات الحيوية'],['notes','المتابعة'],['proc','الإجراءات'],['orders','الطلبات']];
+  let body = '';
+  if (S.ptab==='file') body = fileTab(p);
+  else if (S.ptab==='vitals') body = vitalsTab(p);
+  else if (S.ptab==='notes') body = notesTab(p);
+  else if (S.ptab==='proc') body = procTab(p);
+  else body = ordersTab(p, orders);
+  return `<div class="phead"><span class="bed lg ${p.status==='discharged'?'off':''}"><small>سرير</small><b>${esc(p.bed_number||'–')}</b></span>
+    <div><div class="name">${esc(p.full_name)}</div>
+    <div class="meta">${a!=null?a+' سنة · ':''}${p.gender==='male'?'ذكر':'أنثى'} · إضبارة ${esc(p.file_number)}</div>
+    <div class="meta">${p.status==='admitted' ? 'قبول ' + d(p.admission_date) + ' · اليوم ' + dayNo(p.admission_date) : 'خرج ' + d(p.discharged_at)}${att?' · '+esc(att.name):''}</div></div></div>
+  ${p.allergies ? `<div class="allergy" role="alert">${icon.warn}<span>حساسية: ${esc(p.allergies)}</span></div>` : `<div class="allergy none">ما في حساسية مسجلة</div>`}
+  <div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-a="ptab" data-id="${k}" aria-selected="${S.ptab===k}">${l}${k==='orders'&&nr?`<span class="n">${nr}</span>`:''}</button>`).join('')}</div>
+  ${body}
+  ${p.status==='admitted' ? `<nav class="qbar" aria-label="إضافة سريعة"><button data-a="addVitals">${icon.pulse}<span>علامات حيوية</span></button><button data-a="addNote">${icon.note}<span>ملاحظة</span></button><button data-a="addProc">${icon.hand}<span>إجراء</span></button><button data-a="quickOrder">${icon.tube}<span>تحليل / أشعة</span></button></nav>` : ''}`;
+}
+const HIST = [['chronic_diseases','مرضية'],['surgical_history','جراحية'],['allergies','تحسسية'],['medications','دوائية'],['family_history','عائلية'],['social_history','اجتماعية']];
+function fileTab(p){
+  return `<div class="card"><h3>التشخيص وسبب القبول</h3><p>${esc(p.admission_diagnosis||'—')}</p></div>
+  <div class="card"><h3>السوابق</h3><dl class="dl">${HIST.map(([k,l])=>`<dt>${l}</dt><dd class="${p[k]?'':'none'}">${esc(p[k]||'لا يوجد')}</dd>`).join('')}</dl></div>
+  <div class="card"><h3>معلومات إضافية</h3><dl class="dl"><dt>تاريخ الميلاد</dt><dd>${p.birth_date?d(p.birth_date):'—'}</dd><dt>الهاتف</dt><dd>${esc(p.phone||'—')}</dd><dt>الطبيب المسؤول</dt><dd>${esc(USERS[p.attending]?.name||'—')}</dd></dl></div>
+  ${p.status==='discharged' ? `<div class="card"><h3>ملخص الخروج</h3><p>${esc(p.discharge_summary||'—')}</p></div>` : ''}
+  <div class="actions"><button class="btn" data-a="editPatient">تعديل المعلومات</button>${p.status==='admitted'?`<button class="btn danger" data-a="discharge">تخريج المريض</button>`:''}</div>`;
+}
+const VF = [['sys','الانقباضي','ملم زئبق'],['dia','الانبساطي','ملم زئبق'],['hr','النبض','/د'],['rr','التنفس','/د'],['t','الحرارة','°م'],['spo2','الأكسجة','%'],['glu','السكر','ملغ/دل']];
+function vitalsTab(p){
+  const v = [...p.vitals].sort((a,b)=>b.at-a.at);
+  const add = '';
+  if (!v.length) return add + `<div class="empty">ما في قراءات لسا.</div>`;
+  const L = v[0];
+  const cell = (k,l,val) => `<div class="vcell ${isBad(k,val)?'bad':''}"><small>${l}</small><b>${val ?? '–'}</b></div>`;
+  return add + `<div class="card"><h3>آخر قراءة · ${ago(L.at)} · ${esc(USERS[L.by].name)}</h3>
+    <div class="vgrid">${cell('sys','الضغط',L.sys!=null?L.sys+'/'+L.dia:null).replace('vcell ', 'vcell ' + (isBad('sys',L.sys)||isBad('dia',L.dia)?'bad ':''))}${cell('hr','النبض',L.hr)}${cell('rr','التنفس',L.rr)}${cell('t','الحرارة',L.t)}${cell('spo2','الأكسجة %',L.spo2)}${cell('glu','السكر',L.glu)}</div></div>
+  <div class="card"><h3>كل القراءات</h3><div class="scroll"><table class="vlist"><thead><tr><th>الوقت</th><th>الضغط</th><th>النبض</th><th>تنفس</th><th>حرارة</th><th>أكسجة</th><th>سكر</th></tr></thead><tbody>
+  ${v.map(x=>`<tr><td>${dt(x.at)}</td><td class="${isBad('sys',x.sys)||isBad('dia',x.dia)?'bad':''}">${x.sys!=null?x.sys+'/'+x.dia:'–'}</td><td class="${isBad('hr',x.hr)?'bad':''}">${x.hr??'–'}</td><td class="${isBad('rr',x.rr)?'bad':''}">${x.rr??'–'}</td><td class="${isBad('t',x.t)?'bad':''}">${x.t??'–'}</td><td class="${isBad('spo2',x.spo2)?'bad':''}">${x.spo2??'–'}</td><td class="${isBad('glu',x.glu)?'bad':''}">${x.glu??'–'}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+}
+function notesTab(p){
+  const n = [...p.notes].sort((a,b)=>b.at-a.at);
+  return     (n.length ? `<div class="card"><div class="tl">${n.map(x=>`<div class="item"><div class="when">${dt(x.at)} · ${esc(USERS[x.by].name)}</div><p>${esc(x.text)}</p></div>`).join('')}</div></div>` : `<div class="empty">ما في ملاحظات متابعة لسا.</div>`);
+}
+function procTab(p){
+  const n = [...p.procedures].sort((a,b)=>b.at-a.at);
+  return     (n.length ? n.map(x=>`<div class="card"><div class="order"><div class="top-line"><span class="kind">${esc(x.type)}</span><span class="when">${dt(x.at)}</span></div>${x.notes?`<p>${esc(x.notes)}</p>`:''}<div class="when">${esc(USERS[x.by].name)}</div></div></div>`).join('') : `<div class="empty">ما في إجراءات مسجلة.</div>`);
+}
+function statusTag(o){
+  if (o.status==='pending') return `<span class="tag amber">بالانتظار</span>`;
+  if (o.status==='cancelled') return `<span class="tag muted">ملغى</span>`;
+  return `<span class="tag ok">${o.seen?'جاهز':'نتيجة جديدة'}</span>`;
+}
+function filesHTML(files){
+  return files.length ? `<div class="thumbs">${files.map(f => f.kind==='image'
+    ? `<button class="thumb" data-a="zoom" data-src="${esc(f.src)}" aria-label="تكبير ${esc(f.name)}"><img src="${esc(f.src)}" alt="${esc(f.name)}"></button>`
+    : `<span class="thumb file"><b>PDF</b>${esc(f.name)}</span>`).join('')}</div>` : '';
+}
+function orderCard(o, forDoctor){
+  const p = pById(o.patient);
+  return `<div class="card order">
+    <div class="top-line"><span class="kind">${o.type==='lab'?'تحليل':'أشعة'}${o.priority==='urgent'?' <span class="tag alert">إسعافي</span>':''}</span>${statusTag(o)}</div>
+    <div class="when">${dt(o.at)} · طلب ${esc(USERS[o.by].name)}</div>
+    <div class="req">${esc(o.request_text||'—')}${filesHTML(o.request_files)}</div>
+    ${o.status==='completed' ? `<div class="resp"><div class="when">الرد ${dt(o.completed_at)} · ${esc(USERS[o.responded_by].name)}</div>${o.response_text?`<p>${esc(o.response_text)}</p>`:''}${filesHTML(o.response_files)}</div>` : ''}
+    ${forDoctor && o.status==='pending' ? `<div class="actions" style="margin:10px 0 0"><button class="btn danger" data-a="cancelOrder" data-id="${o.id}">إلغاء الطلب</button></div>` : ''}
+  </div>`;
+}
+function ordersTab(p, orders){
+  const html =     (orders.length ? orders.map(o=>orderCard(o,true)).join('') : `<div class="empty">ما في طلبات لهالمريض.</div>`);
+  orders.forEach(o => { if (o.status==='completed') o.seen = true; });
+  return html;
+}
+
+/* lab / radiology */
+function queueView(){
+  const mine = O.filter(o => o.type === (me().role==='lab'?'lab':'radiology'));
+  const pend = mine.filter(o=>o.status==='pending').sort((a,b)=> (b.priority==='urgent')-(a.priority==='urgent') || a.at-b.at);
+  const done = mine.filter(o=>o.status==='completed').sort((a,b)=>b.completed_at-a.completed_at);
+  const list = S.qtab==='pending' ? pend : done;
+  return `<div class="seg" role="group" aria-label="الطلبات">
+    <button data-a="qtab" data-id="pending" aria-pressed="${S.qtab==='pending'}">بانتظار الرد (${pend.length})</button>
+    <button data-a="qtab" data-id="done" aria-pressed="${S.qtab==='done'}">مكتملة (${done.length})</button></div>
+  <div class="rows">${list.length ? list.map(o => { const p = pById(o.patient); return `<button class="row" data-a="openOrder" data-id="${o.id}">
+      <span class="bed"><small>سرير</small><b>${esc(p.bed_number)}</b></span>
+      <span class="info" style="display:block"><span class="name">${esc(p.full_name)}</span><span class="meta"> · ${esc(p.file_number)}</span>
+      <span class="meta blk">${esc(DEPTS[p.dept].name)} · ${S.qtab==='pending'?ago(o.at):'رد '+ago(o.completed_at)}</span>
+      <span class="dx">${esc(o.request_text)}</span>
+      <span class="flags">${o.priority==='urgent'?'<span class="tag alert">إسعافي</span>':''}${o.request_files.length?'<span class="tag muted">فيه مرفق</span>':''}</span></span></button>`; }).join('') : `<div class="empty">${S.qtab==='pending'?'ما في طلبات بالانتظار.':'ما في طلبات مكتملة لسا.'}</div>`}</div>`;
+}
+function orderView(o){
+  const p = pById(o.patient);
+  const head = `<div class="phead"><span class="bed lg"><small>سرير</small><b>${esc(p.bed_number)}</b></span><div><div class="name">${esc(p.full_name)}</div><div class="meta">إضبارة ${esc(p.file_number)} · ${esc(DEPTS[p.dept].name)}</div><div class="meta">ما بيظهر إلك من ملف المريض إلا هالمعلومات والطلب.</div></div></div><div style="height:12px"></div>`;
+  if (o.status!=='pending') return head + orderCard(o,false);
+  return head + orderCard(o,false) + `<div class="card"><h3>الرد على الطلب</h3>
+    <div class="field"><label for="rt">ملاحظة (اختيارية)</label><textarea id="rt" placeholder="مثلاً: البوتاسيوم منخفض، النتيجة بالمرفق"></textarea></div>
+    <div class="field"><label for="rf">ملفات النتيجة</label><input id="rf" type="file" accept="image/*,application/pdf" multiple><span class="hint">صورة أو PDF، فيك تختار أكتر من ملف أو تصوّر بالكاميرا.</span></div>
+    <div id="rprev" class="thumbs"></div>
+    <div id="rerr" class="errmsg" role="alert"></div>
+    <button class="btn primary block" data-a="respond" data-id="${o.id}" style="margin-top:10px">إرسال النتيجة</button></div>`;
+}
+
+/* ---------- sheets ---------- */
+function openSheet(html){
+  $('#layer').innerHTML = `<div class="overlay" data-a="closeSheet"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  const f = $('#layer .sheet input, #layer .sheet textarea, #layer .sheet select'); if (f) f.focus();
+}
+const closeSheet = () => { $('#layer').innerHTML=''; };
+const fld = (id,label,type='text',val='',extra='') => `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(val)}" ${extra}></div>`;
+const area = (id,label,val='',ph='') => `<div class="field"><label for="${id}">${label}</label><textarea id="${id}" placeholder="${esc(ph)}">${esc(val)}</textarea></div>`;
+const sheetBtns = (act,label) => `<div class="sheet-actions"><button class="btn" data-a="closeSheet">إلغاء</button><button class="btn primary" data-a="${act}">${label}</button></div>`;
+
+function patientForm(p){
+  const docs = Object.values(USERS).filter(u=>u.role==='doctor' && u.dept===me().dept);
+  const v = k => p ? p[k] : '';
+  return `<h2>${p?'تعديل معلومات المريض':'مريض جديد'}</h2>
+    ${fld('f_name','الاسم الكامل *','text',v('full_name'),'autocomplete="off"')}
+    <div class="two">${fld('f_file','رقم الإضبارة *','text',v('file_number'),'inputmode="numeric" autocomplete="off"')}${fld('f_bed','رقم السرير','text',v('bed_number'),'autocomplete="off"')}</div>
+    <div class="two"><div class="field"><label for="f_gender">الجنس *</label><select id="f_gender"><option value="">اختار</option><option value="male" ${v('gender')==='male'?'selected':''}>ذكر</option><option value="female" ${v('gender')==='female'?'selected':''}>أنثى</option></select></div>${fld('f_birth','تاريخ الميلاد','date',v('birth_date'))}</div>
+    ${fld('f_phone','الهاتف','tel',v('phone'))}
+    <div class="field"><label for="f_att">الطبيب المسؤول</label><select id="f_att">${docs.map(u=>`<option value="${u.id}" ${(p?p.attending:me().id)===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}</select></div>
+    ${area('f_dx','التشخيص وسبب القبول',v('admission_diagnosis'))}
+    ${area('f_allergies','الحساسية',v('allergies'),'دواء، طعام، لاتكس… اتركها فاضية إذا ما في')}
+    <details class="more" ${p?'open':''}><summary>باقي السوابق</summary><div style="margin-top:10px">
+      ${HIST.filter(([k])=>k!=='allergies').map(([k,l])=>area('f_'+k,'السوابق ال'+l, v(k))).join('')}
+    </div></details>
+    <div id="ferr" class="errmsg" role="alert"></div>
+    ${sheetBtns(p?'savePatient':'createPatient', p?'حفظ التعديلات':'إضافة المريض')}`;
+}
+function readPatientForm(existing){
+  const val = i => ($('#'+i)?.value || '').trim();
+  const o = { full_name:val('f_name'), file_number:val('f_file'), bed_number:val('f_bed'), gender:val('f_gender'), birth_date:val('f_birth'), phone:val('f_phone'), attending:+val('f_att'), admission_diagnosis:val('f_dx'), allergies:val('f_allergies') };
+  HIST.forEach(([k]) => { if (k!=='allergies') o[k] = val('f_'+k); });
+  const errs = [];
+  if (!o.full_name) errs.push('الاسم مطلوب');
+  if (!o.file_number) errs.push('رقم الإضبارة مطلوب');
+  else if (P.some(p => p.file_number===o.file_number && p!==existing)) errs.push('رقم الإضبارة مستعمل لمريض تاني');
+  if (!o.gender) errs.push('اختار الجنس');
+  if (errs.length){ $('#ferr').textContent = errs.join('، ') + '.'; return null; }
+  return o;
+}
+
+function vitalsForm(){
+  return `<h2>تسجيل علامات حيوية</h2>
+    <div class="two">${fld('v_sys','الضغط الانقباضي','number','','inputmode="numeric"')}${fld('v_dia','الضغط الانبساطي','number','','inputmode="numeric"')}</div>
+    <div class="three">${fld('v_hr','النبض','number','','inputmode="numeric"')}${fld('v_rr','التنفس','number','','inputmode="numeric"')}${fld('v_t','الحرارة','number','','inputmode="decimal" step="0.1"')}</div>
+    <div class="two">${fld('v_spo2','الأكسجة %','number','','inputmode="numeric"')}${fld('v_glu','السكر ملغ/دل','number','','inputmode="numeric"')}</div>
+    <div id="ferr" class="errmsg" role="alert"></div>
+    ${sheetBtns('saveVitals','حفظ القراءة')}`;
+}
+const PROC_TYPES = ['فتح وريد','قثطرة بولية','أنبوب أنفي معدي','تغيير ضماد','نقل دم','غسيل كلى','بزل','خط وريدي مركزي','قطب جلدية'];
+function procForm(){
+  return `<h2>تسجيل إجراء</h2>
+    <div class="chips" role="group" aria-label="أنواع شائعة">${PROC_TYPES.map(t=>`<button class="chip" data-a="pickProc" data-id="${esc(t)}" aria-pressed="false">${esc(t)}</button>`).join('')}</div>
+    ${fld('pr_type','نوع الإجراء *','text','','autocomplete="off"')}
+    ${area('pr_notes','تفاصيل','','مثلاً: قنية 18G باليد اليمنى')}
+    <div id="ferr" class="errmsg" role="alert"></div>
+    ${sheetBtns('saveProc','تسجيل')}`;
+}
+function orderForm(type){
+  return `<h2>${type==='lab'?'طلب تحليل':'طلب أشعة'}</h2>
+    <div class="chips" role="group" aria-label="الأولوية"><button class="chip" data-a="prio" data-id="normal" aria-pressed="true">عادي</button><button class="chip" data-a="prio" data-id="urgent" aria-pressed="false">إسعافي</button></div>
+    ${area('o_text', type==='lab'?'التحاليل المطلوبة':'الصورة المطلوبة', '', type==='lab'?'مثلاً: CBC، كرياتينين، بوتاسيوم':'مثلاً: صورة صدر بسيطة، إيكو بطن')}
+    <div class="field"><label for="o_file">صورة مع الطلب (اختيارية)</label><input id="o_file" type="file" accept="image/*"><span class="hint">مثلاً صورة ورقة الطلب.</span></div>
+    <div id="oprev" class="thumbs"></div>
+    <div id="ferr" class="errmsg" role="alert"></div>
+    <input type="hidden" id="o_type" value="${type}"><input type="hidden" id="o_prio" value="normal">
+    ${sheetBtns('saveOrder','إرسال الطلب')}`;
+}
+
+/* file reading */
+const pending = { order:[], respond:[] };
+function readFiles(input, bucket, prevSel){
+  pending[bucket] = [];
+  const files = [...input.files].slice(0,6);
+  const prev = $(prevSel); prev.innerHTML = '';
+  files.forEach(f => {
+    if (f.size > 8*1024*1024){ toast('الملف ' + f.name + ' أكبر من 8 ميغا'); return; }
+    if (f.type.startsWith('image/')){
+      const r = new FileReader();
+      r.onload = () => { pending[bucket].push({name:f.name, kind:'image', src:r.result}); prev.insertAdjacentHTML('beforeend', `<span class="thumb"><img src="${esc(r.result)}" alt="${esc(f.name)}"></span>`); };
+      r.readAsDataURL(f);
+    } else {
+      pending[bucket].push({name:f.name, kind:'pdf'});
+      prev.insertAdjacentHTML('beforeend', `<span class="thumb file"><b>PDF</b>${esc(f.name)}</span>`);
+    }
+  });
+}
+
+/* ---------- events ---------- */
+const num = i => { const x = $('#'+i).value.trim(); return x==='' ? null : +x; };
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  const a = el.dataset.a, idv = el.dataset.id;
+  if (a==='closeSheet'){ if (el.classList.contains('overlay') && e.target!==el) return; closeSheet(); return; }
+  const v = view(), p = v.name==='patient' ? pById(v.id) : null;
+  switch(a){
+    case 'login': S.user = +idv; S.stack = [{name: isDoc() ? 'list' : 'queue'}]; S.tab='admitted'; S.search=''; S.qtab='pending'; render(); break;
+    case 'logout': S.user = null; S.stack = []; render(); break;
+    case 'back': back(); break;
+    case 'tab': S.tab = idv; render(); break;
+    case 'qtab': S.qtab = idv; render(); break;
+    case 'open': S.ptab = 'file'; go({name:'patient', id:+idv}); break;
+    case 'ptab': S.ptab = idv; render(); break;
+    case 'openOrder': go({name:'order', id:+idv}); break;
+    case 'zoom': $('#layer').innerHTML = `<div class="lightbox" data-a="closeSheet"><button class="iconbtn" style="background:transparent;border-color:#fff6" data-a="closeSheet" aria-label="إغلاق">${icon.close}</button><img src="${esc(el.dataset.src)}" alt=""></div>`; break;
+
+    case 'addPatient': openSheet(patientForm(null)); break;
+    case 'createPatient': { const o = readPatientForm(null); if(!o) return; const np = addP(Object.assign(o, {dept:me().dept, admission_date:Date.now(), created_by:me().id})); closeSheet(); S.tab='admitted'; toast('انضاف المريض'); S.ptab='file'; go({name:'patient', id:np.id}); break; }
+    case 'editPatient': openSheet(patientForm(p)); break;
+    case 'savePatient': { const o = readPatientForm(p); if(!o) return; Object.assign(p, o); closeSheet(); toast('انحفظت التعديلات'); render(); break; }
+    case 'discharge': openSheet(`<h2>تخريج ${esc(p.full_name)}</h2>${area('d_sum','ملخص الخروج','','الحالة عند الخروج، الأدوية، موعد المراجعة')}${sheetBtns('doDischarge','تخريج المريض')}`); break;
+    case 'doDischarge': p.discharge_summary = $('#d_sum').value.trim(); p.status='discharged'; p.discharged_at = Date.now(); closeSheet(); toast('خرج المريض'); render(); break;
+
+    case 'addVitals': openSheet(vitalsForm()); break;
+    case 'saveVitals': { const r = {sys:num('v_sys'), dia:num('v_dia'), hr:num('v_hr'), rr:num('v_rr'), t:num('v_t'), spo2:num('v_spo2'), glu:num('v_glu')}; if (Object.values(r).every(x=>x==null)){ $('#ferr').textContent='عبّي قيمة وحدة على الأقل.'; return; } p.vitals.push(Object.assign({id:id(), at:Date.now(), by:me().id}, r)); closeSheet(); S.ptab='vitals'; toast('انحفظت القراءة'); render(); break; }
+    case 'addNote': openSheet(`<h2>ملاحظة متابعة</h2>${area('n_text','الملاحظة','','وضع المريض اليوم، الفحص، الخطة')}<div id="ferr" class="errmsg" role="alert"></div>${sheetBtns('saveNote','حفظ الملاحظة')}`); break;
+    case 'saveNote': { const t = $('#n_text').value.trim(); if(!t){ $('#ferr').textContent='اكتب الملاحظة أول.'; return; } p.notes.push({id:id(), at:Date.now(), by:me().id, text:t}); closeSheet(); S.ptab='notes'; toast('انحفظت الملاحظة'); render(); break; }
+    case 'addProc': openSheet(procForm()); break;
+    case 'pickProc': $('#pr_type').value = idv; document.querySelectorAll('[data-a="pickProc"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); break;
+    case 'saveProc': { const t = $('#pr_type').value.trim(); if(!t){ $('#ferr').textContent='اختار أو اكتب نوع الإجراء.'; return; } p.procedures.push({id:id(), at:Date.now(), by:me().id, type:t, notes:$('#pr_notes').value.trim()}); closeSheet(); S.ptab='proc'; toast('انسجل الإجراء'); render(); break; }
+
+    case 'quickOrder': openSheet(`<h2>شو بدك تطلب؟</h2><div class="pick"><button class="btn primary" data-a="newOrder" data-id="lab">${icon.tube}طلب تحليل</button><button class="btn primary" data-a="newOrder" data-id="radiology">${icon.xray}طلب أشعة</button></div><div class="sheet-actions"><button class="btn" data-a="closeSheet">إلغاء</button></div>`); break;
+    case 'newOrder': pending.order = []; openSheet(orderForm(idv)); break;
+    case 'prio': $('#o_prio').value = idv; document.querySelectorAll('[data-a="prio"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); break;
+    case 'saveOrder': { const t = $('#o_text').value.trim(); if(!t && !pending.order.length){ $('#ferr').textContent='اكتب الطلب أو ارفق صورة.'; return; } const type = $('#o_type').value; addO({patient:p.id, type, by:me().id, at:Date.now(), priority:$('#o_prio').value, request_text:t, request_files:pending.order.slice()}); closeSheet(); S.ptab='orders'; toast(type==='lab'?'انبعت الطلب للمخبر':'انبعت الطلب للأشعة'); render(); break; }
+    case 'cancelOrder': { const o = oById(idv); o.status='cancelled'; toast('انلغى الطلب'); render(); break; }
+
+    case 'respond': { const o = oById(idv); const t = $('#rt').value.trim(); if(!t && !pending.respond.length){ $('#rerr').textContent='ارفق ملف النتيجة أو اكتب ملاحظة.'; return; } Object.assign(o, {status:'completed', response_text:t, response_files:pending.respond.slice(), responded_by:me().id, completed_at:Date.now(), seen:false}); pending.respond=[]; toast('انبعتت النتيجة للطبيب'); back(); break; }
+  }
+});
+document.addEventListener('input', e => {
+  if (e.target.id==='q'){ S.search = e.target.value; $('#rows').innerHTML = rowsHTML(); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id==='o_file') readFiles(e.target, 'order', '#oprev');
+  if (e.target.id==='rf') readFiles(e.target, 'respond', '#rprev');
+});
+document.addEventListener('keydown', e => { if (e.key==='Escape' && $('#layer').innerHTML) closeSheet(); });
+
+render();
+})();
+</script>
+</body>
+</html>
