@@ -190,6 +190,12 @@ details.more summary{cursor:pointer;font-weight:600}
   .sheet{animation:up .22s ease-out}
   @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
 }
+.tgroup h4{margin:12px 0 6px;font-size:14px;color:var(--ink-2);font-weight:600}
+.tgroup:first-child h4{color:var(--primary)}
+.tgroup .chips{margin-bottom:4px}
+.tsel{position:sticky;top:-16px;z-index:1;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;color:var(--ink-2);margin-bottom:4px}
+.tsel.on{background:var(--primary-soft);color:var(--head-ink);font-weight:600;border-color:#B3E5FC}
+.chip[hidden],.tgroup[hidden]{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -287,15 +293,31 @@ const p8 = addP({dept:2, file_number:'241199', full_name:'فاطمة حسن ال
 const p9 = addP({dept:2, file_number:'241201', full_name:'جورج إلياس منصور', gender:'male', birth_date:'1958-10-11', admission_date:NOW-2*D, bed_number:'ICU-4', attending:3, admission_diagnosis:'مراقبة بعد استئصال طحال رضّي', social_history:'كحول بشكل اجتماعي'});
 const p10 = addP({dept:2, file_number:'241209', full_name:'هبة مروان دياب', gender:'female', birth_date:'1990-02-19', admission_date:NOW-10*H, bed_number:'ICU-1', attending:3, admission_diagnosis:'نزف بعد الولادة، نقل دم، مراقبة', surgical_history:'قيصرية 2021'});
 
-function V(p, hAgo, sys, dia, hr, rr, t, spo2, glu, by){ p.vitals.push({id:id(), at:NOW-hAgo*H, sys, dia, hr, rr, t, spo2, glu, by}); }
-V(p1,1,128,82,88,16,37.4,97,182,1); V(p1,8,135,85,96,18,38.1,96,210,2); V(p1,20,130,80,92,18,37.8,97,195,1);
+const CATS = {civil:'مدني', interior:'وزارة الداخلية', interior_relative:'قرابة داخلية', defense:'وزارة الدفاع', detained:'موقوف'};
+const LAB_GROUPS = [
+  {name:'الأكثر طلباً', tests:['CBC','Glucose','Urea','Creatinine','Sodium (Na+)','Potassium (K+)','CRP','PT / INR']},
+  {name:'Hematology', tests:['CBC','Blood Group','ESR']},
+  {name:'Biochemistry', tests:['Glucose','Urea','Creatinine','Uric acid']},
+  {name:'Coagulation Tests', tests:['PT / INR','PTT','Coagulation time','Bleeding time']},
+  {name:'Lipid Profile', tests:['Cholesterol','Triglycerides','HDL','LDL']},
+  {name:'Serology', tests:['HBs Ag','HCV Ab','HIV Ab','Anti H-pylori','Pregnancy ICT test']},
+  {name:'Liver Function Tests', tests:['ALT','AST','ALP','GGT','LDH','Bilirubin (Total)','Bilirubin (Direct)']},
+  {name:'Electrolytes & Minerals', tests:['Calcium','Phosphor','Sodium (Na+)','Potassium (K+)','Ionic Calcium (Ca++)','Chloride (Cl-)','Iron (Fe)']},
+  {name:'Protein Studies', tests:['Total Protein','Albumin']},
+  {name:'Cardiac & Other Tests', tests:['CK','Amylase','Troponin','CRP','Blood Gases']},
+  {name:'Urine & Stool Analysis', tests:['Urine Analysis','Stool Analysis']}
+];
+[[p1,'interior','دمشق – المزة'],[p2,'civil','ريف دمشق – جرمانا'],[p3,'interior_relative','دمشق – برزة'],[p4,'civil','دمشق – الميدان'],[p5,'defense','ريف دمشق – قدسيا'],[p6,'interior_relative','حمص – الوعر'],[p7,'interior','دمشق – كفرسوسة'],[p8,'civil','درعا – المحطة'],[p9,'defense','دمشق – باب توما'],[p10,'interior_relative','ريف دمشق – صحنايا']].forEach(([p,c,r])=>{ p.category=c; p.residence=r; });
+
+function V(p, hAgo, sys, dia, hr, rr, t, spo2, glu, by, uo=null, dr=null, drn=''){ p.vitals.push({id:id(), at:NOW-hAgo*H, sys, dia, hr, rr, t, spo2, glu, by, uo, dr, drn}); }
+V(p1,1,128,82,88,16,37.4,97,182,1,400); V(p1,8,135,85,96,18,38.1,96,210,2); V(p1,20,130,80,92,18,37.8,97,195,1);
 V(p2,2,142,90,78,16,37.0,98,null,2); V(p2,14,150,94,84,18,37.9,97,null,2);
-V(p3,1,104,66,112,22,37.2,94,null,1); V(p3,6,110,70,104,20,37.0,95,null,1);
+V(p3,1,104,66,112,22,37.2,94,null,1,90); V(p3,6,110,70,104,20,37.0,95,null,1,150);
 V(p4,3,118,74,80,14,36.9,99,null,2);
 V(p5,1,138,86,98,18,37.1,98,null,1);
-V(p6,4,120,76,90,18,37.6,96,null,2);
-V(p8,1,92,54,118,24,38.6,91,240,3); V(p8,3,88,50,124,26,38.9,90,265,3); V(p8,6,95,58,115,22,38.4,92,220,3);
-V(p9,2,116,72,94,16,37.0,98,null,3);
+V(p6,4,120,76,90,18,37.6,96,null,2,600);
+V(p8,1,92,54,118,24,38.6,91,240,3,40,180,'مفجر بطني أيسر، مصلي دموي'); V(p8,3,88,50,124,26,38.9,90,265,3,35,220,'مفجر بطني أيسر'); V(p8,6,95,58,115,22,38.4,92,220,3,60,250);
+V(p9,2,116,72,94,16,37.0,98,null,3,500,70,'مفجر تحت الحجاب الأيسر، مصلي');
 V(p10,1,102,64,108,18,36.8,97,null,3);
 
 function N(p, hAgo, by, text){ p.notes.push({id:id(), at:NOW-hAgo*H, by, text}); }
@@ -315,16 +337,16 @@ PR(p8,20,3,'غسيل كلى','جلسة CRRT، 4 ساعات');
 PR(p10,8,3,'نقل دم','وحدتين كريات حمراء مركزة');
 
 const O = [];
-function addO(o){ const x = Object.assign({id:id(), status:'pending', priority:'normal', request_text:'', request_files:[], response_text:'', response_files:[], responded_by:null, completed_at:null, seen:true}, o); O.push(x); return x; }
-addO({patient:p1.id, type:'lab', by:2, at:NOW-21*H, priority:'normal', request_text:'CBC، CRP، سكر صيامي', status:'completed', responded_by:4, completed_at:NOW-18*H, response_text:'ارتفاع خفيف بالكريات البيض و CRP.', response_files:[{name:'نتيجة-CBC.png', kind:'image', src:labReport('خالد محمود السيد – 241187', [['WBC','13.2',true,'4–11'],['Hb','13.8',false,'13–17'],['PLT','265',false,'150–400'],['CRP','48',true,'<5'],['سكر صيامي','198',true,'70–100']])}], seen:true});
-addO({patient:p1.id, type:'lab', by:1, at:NOW-2*H, priority:'normal', request_text:'كهارل وكرياتينين', status:'pending'});
+function addO(o){ const x = Object.assign({id:id(), status:'pending', priority:'normal', tests:[], request_text:'', request_files:[], response_text:'', response_files:[], responded_by:null, completed_at:null, seen:true}, o); O.push(x); return x; }
+addO({patient:p1.id, type:'lab', by:2, at:NOW-21*H, priority:'normal', tests:['CBC','CRP','Glucose'], request_text:'', status:'completed', responded_by:4, completed_at:NOW-18*H, response_text:'ارتفاع خفيف بالكريات البيض و CRP.', response_files:[{name:'نتيجة-CBC.png', kind:'image', src:labReport('خالد محمود السيد – 241187', [['WBC','13.2',true,'4–11'],['Hb','13.8',false,'13–17'],['PLT','265',false,'150–400'],['CRP','48',true,'<5'],['سكر صيامي','198',true,'70–100']])}], seen:true});
+addO({patient:p1.id, type:'lab', by:1, at:NOW-2*H, priority:'normal', tests:['Sodium (Na+)','Potassium (K+)','Chloride (Cl-)','Creatinine'], status:'pending'});
 addO({patient:p2.id, type:'radiology', by:2, at:NOW-30*H, request_text:'إيكو بطن، تقييم المرارة والطرق الصفراوية', status:'completed', responded_by:5, completed_at:NOW-26*H, response_text:'مرارة متسمكة الجدار مع حصيات متعددة، أكبرها 1.8 سم. القناة الجامعة غير متوسعة (6 مم).', response_files:[{name:'تقرير-الإيكو.pdf', kind:'pdf'}], seen:true});
 addO({patient:p3.id, type:'radiology', by:1, at:NOW-50*60e3, priority:'urgent', request_text:'صورة بطن بسيطة واقفة', status:'pending'});
-addO({patient:p3.id, type:'lab', by:1, at:NOW-3*H, priority:'urgent', request_text:'INR، كهارل، CBC', status:'completed', responded_by:4, completed_at:NOW-1*H, response_text:'INR مرتفع 3.4، البوتاسيوم منخفض.', response_files:[{name:'نتيجة.png', kind:'image', src:labReport('يوسف جميل حمدان – 241203', [['INR','3.4',true,'0.8–1.2'],['K','3.1',true,'3.5–5.1'],['Na','137',false,'135–145'],['WBC','9.8',false,'4–11'],['Hb','12.1',true,'13–17']])}], seen:false});
-addO({patient:p5.id, type:'lab', by:1, at:NOW-5*H, priority:'urgent', request_text:'تحاليل ما قبل العملية: CBC، PT/INR، زمرة وتصالب', status:'pending'});
+addO({patient:p3.id, type:'lab', by:1, at:NOW-3*H, priority:'urgent', tests:['PT / INR','Sodium (Na+)','Potassium (K+)','CBC'], status:'completed', responded_by:4, completed_at:NOW-1*H, response_text:'INR مرتفع 3.4، البوتاسيوم منخفض.', response_files:[{name:'نتيجة.png', kind:'image', src:labReport('يوسف جميل حمدان – 241203', [['INR','3.4',true,'0.8–1.2'],['K','3.1',true,'3.5–5.1'],['Na','137',false,'135–145'],['WBC','9.8',false,'4–11'],['Hb','12.1',true,'13–17']])}], seen:false});
+addO({patient:p5.id, type:'lab', by:1, at:NOW-5*H, priority:'urgent', tests:['CBC','PT / INR','PTT','Blood Group'], request_text:'تصالب وحدتين دم', status:'pending'});
 addO({patient:p8.id, type:'radiology', by:3, at:NOW-4*H, priority:'urgent', request_text:'صورة صدر بالسرير، تأكيد موضع الأنبوب والخط المركزي', status:'completed', responded_by:5, completed_at:NOW-3*H, response_text:'الأنبوب الرغامي فوق الجؤجؤ بـ 4 سم، الخط المركزي بموضعه. ارتشاحات قاعدية يمنى.', response_files:[{name:'صدر-محمول.png', kind:'image', src:xrayImg('صورة صدر')}], seen:false});
-addO({patient:p8.id, type:'lab', by:3, at:NOW-40*60e3, priority:'urgent', request_text:'غازات دم شرياني، لاكتات', status:'pending'});
-addO({patient:p6.id, type:'lab', by:2, at:NOW-6*H, request_text:'أميلاز، ليباز، وظائف كبد', status:'pending'});
+addO({patient:p8.id, type:'lab', by:3, at:NOW-40*60e3, priority:'urgent', tests:['Blood Gases'], request_text:'لاكتات', status:'pending'});
+addO({patient:p6.id, type:'lab', by:2, at:NOW-6*H, tests:['Amylase','ALT','AST','ALP','GGT','Bilirubin (Total)'], request_text:'ليباز', status:'pending'});
 
 /* ---------- state ---------- */
 const S = { user:null, stack:[], tab:'admitted', search:'', ptab:'file', qtab:'pending' };
@@ -415,6 +437,7 @@ function patientView(p){
   else body = ordersTab(p, orders);
   return `<div class="phead"><span class="bed lg ${p.status==='discharged'?'off':''}"><small>سرير</small><b>${esc(p.bed_number||'–')}</b></span>
     <div><div class="name">${esc(p.full_name)}</div>
+    ${p.category?`<span class="tag muted" style="display:inline-block;margin:2px 0 4px">${esc(CATS[p.category])}</span>`:''}
     <div class="meta">${a!=null?a+' سنة · ':''}${p.gender==='male'?'ذكر':'أنثى'} · إضبارة ${esc(p.file_number)}</div>
     <div class="meta">${p.status==='admitted' ? 'قبول ' + d(p.admission_date) + ' · اليوم ' + dayNo(p.admission_date) : 'خرج ' + d(p.discharged_at)}${att?' · '+esc(att.name):''}</div></div></div>
   ${p.allergies ? `<div class="allergy" role="alert">${icon.warn}<span>حساسية: ${esc(p.allergies)}</span></div>` : `<div class="allergy none">ما في حساسية مسجلة</div>`}
@@ -426,7 +449,7 @@ const HIST = [['chronic_diseases','مرضية'],['surgical_history','جراحي�
 function fileTab(p){
   return `<div class="card"><h3>التشخيص وسبب القبول</h3><p>${esc(p.admission_diagnosis||'—')}</p></div>
   <div class="card"><h3>السوابق</h3><dl class="dl">${HIST.map(([k,l])=>`<dt>${l}</dt><dd class="${p[k]?'':'none'}">${esc(p[k]||'لا يوجد')}</dd>`).join('')}</dl></div>
-  <div class="card"><h3>معلومات إضافية</h3><dl class="dl"><dt>تاريخ الميلاد</dt><dd>${p.birth_date?d(p.birth_date):'—'}</dd><dt>الهاتف</dt><dd>${esc(p.phone||'—')}</dd><dt>الطبيب المسؤول</dt><dd>${esc(USERS[p.attending]?.name||'—')}</dd></dl></div>
+  <div class="card"><h3>معلومات إضافية</h3><dl class="dl"><dt>الصفة الاعتبارية</dt><dd>${esc(CATS[p.category]||'—')}</dd><dt>السكن</dt><dd>${esc(p.residence||'—')}</dd><dt>تاريخ الميلاد</dt><dd>${p.birth_date?d(p.birth_date):'—'}</dd><dt>الهاتف</dt><dd>${esc(p.phone||'—')}</dd><dt>الطبيب المسؤول</dt><dd>${esc(USERS[p.attending]?.name||'—')}</dd></dl></div>
   ${p.status==='discharged' ? `<div class="card"><h3>ملخص الخروج</h3><p>${esc(p.discharge_summary||'—')}</p></div>` : ''}
   <div class="actions"><button class="btn" data-a="editPatient">تعديل المعلومات</button>${p.status==='admitted'?`<button class="btn danger" data-a="discharge">تخريج المريض</button>`:''}</div>`;
 }
@@ -438,9 +461,9 @@ function vitalsTab(p){
   const L = v[0];
   const cell = (k,l,val) => `<div class="vcell ${isBad(k,val)?'bad':''}"><small>${l}</small><b>${val ?? '–'}</b></div>`;
   return add + `<div class="card"><h3>آخر قراءة · ${ago(L.at)} · ${esc(USERS[L.by].name)}</h3>
-    <div class="vgrid">${cell('sys','الضغط',L.sys!=null?L.sys+'/'+L.dia:null).replace('vcell ', 'vcell ' + (isBad('sys',L.sys)||isBad('dia',L.dia)?'bad ':''))}${cell('hr','النبض',L.hr)}${cell('rr','التنفس',L.rr)}${cell('t','الحرارة',L.t)}${cell('spo2','الأكسجة %',L.spo2)}${cell('glu','السكر',L.glu)}</div></div>
-  <div class="card"><h3>كل القراءات</h3><div class="scroll"><table class="vlist"><thead><tr><th>الوقت</th><th>الضغط</th><th>النبض</th><th>تنفس</th><th>حرارة</th><th>أكسجة</th><th>سكر</th></tr></thead><tbody>
-  ${v.map(x=>`<tr><td>${dt(x.at)}</td><td class="${isBad('sys',x.sys)||isBad('dia',x.dia)?'bad':''}">${x.sys!=null?x.sys+'/'+x.dia:'–'}</td><td class="${isBad('hr',x.hr)?'bad':''}">${x.hr??'–'}</td><td class="${isBad('rr',x.rr)?'bad':''}">${x.rr??'–'}</td><td class="${isBad('t',x.t)?'bad':''}">${x.t??'–'}</td><td class="${isBad('spo2',x.spo2)?'bad':''}">${x.spo2??'–'}</td><td class="${isBad('glu',x.glu)?'bad':''}">${x.glu??'–'}</td></tr>`).join('')}
+    <div class="vgrid">${cell('sys','الضغط',L.sys!=null?L.sys+'/'+L.dia:null).replace('vcell ', 'vcell ' + (isBad('sys',L.sys)||isBad('dia',L.dia)?'bad ':''))}${cell('hr','النبض',L.hr)}${cell('rr','التنفس',L.rr)}${cell('t','الحرارة',L.t)}${cell('spo2','الأكسجة %',L.spo2)}${cell('glu','السكر',L.glu)}${cell('uo','الصادر البولي مل',L.uo)}${cell('dr','المفجرات مل',L.dr)}</div>${L.drn?`<p class="when" style="margin-top:8px">المفجرات: ${esc(L.drn)}</p>`:''}</div>
+  <div class="card"><h3>كل القراءات</h3><div class="scroll"><table class="vlist"><thead><tr><th>الوقت</th><th>الضغط</th><th>النبض</th><th>تنفس</th><th>حرارة</th><th>أكسجة</th><th>سكر</th><th>بولي</th><th>مفجرات</th></tr></thead><tbody>
+  ${v.map(x=>`<tr><td>${dt(x.at)}</td><td class="${isBad('sys',x.sys)||isBad('dia',x.dia)?'bad':''}">${x.sys!=null?x.sys+'/'+x.dia:'–'}</td><td class="${isBad('hr',x.hr)?'bad':''}">${x.hr??'–'}</td><td class="${isBad('rr',x.rr)?'bad':''}">${x.rr??'–'}</td><td class="${isBad('t',x.t)?'bad':''}">${x.t??'–'}</td><td class="${isBad('spo2',x.spo2)?'bad':''}">${x.spo2??'–'}</td><td class="${isBad('glu',x.glu)?'bad':''}">${x.glu??'–'}</td><td>${x.uo??'–'}</td><td>${x.dr??'–'}</td></tr>`).join('')}
   </tbody></table></div></div>`;
 }
 function notesTab(p){
@@ -450,6 +473,11 @@ function notesTab(p){
 function procTab(p){
   const n = [...p.procedures].sort((a,b)=>b.at-a.at);
   return     (n.length ? n.map(x=>`<div class="card"><div class="order"><div class="top-line"><span class="kind">${esc(x.type)}</span><span class="when">${dt(x.at)}</span></div>${x.notes?`<p>${esc(x.notes)}</p>`:''}<div class="when">${esc(USERS[x.by].name)}</div></div></div>`).join('') : `<div class="empty">ما في إجراءات مسجلة.</div>`);
+}
+const reqText = o => [...(o.tests||[]), o.request_text].filter(Boolean).join('، ');
+function reqHTML(o){
+  const t = (o.tests||[]).map(x=>`<span class="tag muted" dir="ltr">${esc(x)}</span>`).join('');
+  return (t?`<div class="flags" style="margin-top:0">${t}</div>`:'') + (o.request_text?`<p style="${t?'margin-top:8px':''}">${t?'أخرى: ':''}${esc(o.request_text)}</p>`:'') || '—';
 }
 function statusTag(o){
   if (o.status==='pending') return `<span class="tag amber">بالانتظار</span>`;
@@ -466,7 +494,7 @@ function orderCard(o, forDoctor){
   return `<div class="card order">
     <div class="top-line"><span class="kind">${o.type==='lab'?'تحليل':'أشعة'}${o.priority==='urgent'?' <span class="tag alert">إسعافي</span>':''}</span>${statusTag(o)}</div>
     <div class="when">${dt(o.at)} · طلب ${esc(USERS[o.by].name)}</div>
-    <div class="req">${esc(o.request_text||'—')}${filesHTML(o.request_files)}</div>
+    <div class="req">${reqHTML(o)}${filesHTML(o.request_files)}</div>
     ${o.status==='completed' ? `<div class="resp"><div class="when">الرد ${dt(o.completed_at)} · ${esc(USERS[o.responded_by].name)}</div>${o.response_text?`<p>${esc(o.response_text)}</p>`:''}${filesHTML(o.response_files)}</div>` : ''}
     ${forDoctor && o.status==='pending' ? `<div class="actions" style="margin:10px 0 0"><button class="btn danger" data-a="cancelOrder" data-id="${o.id}">إلغاء الطلب</button></div>` : ''}
   </div>`;
@@ -490,7 +518,7 @@ function queueView(){
       <span class="bed"><small>سرير</small><b>${esc(p.bed_number)}</b></span>
       <span class="info" style="display:block"><span class="name">${esc(p.full_name)}</span><span class="meta"> · ${esc(p.file_number)}</span>
       <span class="meta blk">${esc(DEPTS[p.dept].name)} · ${S.qtab==='pending'?ago(o.at):'رد '+ago(o.completed_at)}</span>
-      <span class="dx">${esc(o.request_text)}</span>
+      <span class="dx">${esc(reqText(o))}</span>
       <span class="flags">${o.priority==='urgent'?'<span class="tag alert">إسعافي</span>':''}${o.request_files.length?'<span class="tag muted">فيه مرفق</span>':''}</span></span></button>`; }).join('') : `<div class="empty">${S.qtab==='pending'?'ما في طلبات بالانتظار.':'ما في طلبات مكتملة لسا.'}</div>`}</div>`;
 }
 function orderView(o){
@@ -522,6 +550,8 @@ function patientForm(p){
     ${fld('f_name','الاسم الكامل *','text',v('full_name'),'autocomplete="off"')}
     <div class="two">${fld('f_file','رقم الإضبارة *','text',v('file_number'),'inputmode="numeric" autocomplete="off"')}${fld('f_bed','رقم السرير','text',v('bed_number'),'autocomplete="off"')}</div>
     <div class="two"><div class="field"><label for="f_gender">الجنس *</label><select id="f_gender"><option value="">اختار</option><option value="male" ${v('gender')==='male'?'selected':''}>ذكر</option><option value="female" ${v('gender')==='female'?'selected':''}>أنثى</option></select></div>${fld('f_birth','تاريخ الميلاد','date',v('birth_date'))}</div>
+    <div class="field"><label for="f_cat">الصفة الاعتبارية *</label><select id="f_cat"><option value="">اختار</option>${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${v('category')===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    ${fld('f_res','السكن','text',v('residence'),'placeholder="المدينة – المنطقة" autocomplete="off"')}
     ${fld('f_phone','الهاتف','tel',v('phone'))}
     <div class="field"><label for="f_att">الطبيب المسؤول</label><select id="f_att">${docs.map(u=>`<option value="${u.id}" ${(p?p.attending:me().id)===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}</select></div>
     ${area('f_dx','التشخيص وسبب القبول',v('admission_diagnosis'))}
@@ -534,13 +564,14 @@ function patientForm(p){
 }
 function readPatientForm(existing){
   const val = i => ($('#'+i)?.value || '').trim();
-  const o = { full_name:val('f_name'), file_number:val('f_file'), bed_number:val('f_bed'), gender:val('f_gender'), birth_date:val('f_birth'), phone:val('f_phone'), attending:+val('f_att'), admission_diagnosis:val('f_dx'), allergies:val('f_allergies') };
+  const o = { full_name:val('f_name'), file_number:val('f_file'), bed_number:val('f_bed'), gender:val('f_gender'), birth_date:val('f_birth'), phone:val('f_phone'), attending:+val('f_att'), admission_diagnosis:val('f_dx'), allergies:val('f_allergies'), category:val('f_cat'), residence:val('f_res') };
   HIST.forEach(([k]) => { if (k!=='allergies') o[k] = val('f_'+k); });
   const errs = [];
   if (!o.full_name) errs.push('الاسم مطلوب');
   if (!o.file_number) errs.push('رقم الإضبارة مطلوب');
   else if (P.some(p => p.file_number===o.file_number && p!==existing)) errs.push('رقم الإضبارة مستعمل لمريض تاني');
   if (!o.gender) errs.push('اختار الجنس');
+  if (!o.category) errs.push('اختار الصفة الاعتبارية');
   if (errs.length){ $('#ferr').textContent = errs.join('، ') + '.'; return null; }
   return o;
 }
@@ -550,6 +581,8 @@ function vitalsForm(){
     <div class="two">${fld('v_sys','الضغط الانقباضي','number','','inputmode="numeric"')}${fld('v_dia','الضغط الانبساطي','number','','inputmode="numeric"')}</div>
     <div class="three">${fld('v_hr','النبض','number','','inputmode="numeric"')}${fld('v_rr','التنفس','number','','inputmode="numeric"')}${fld('v_t','الحرارة','number','','inputmode="decimal" step="0.1"')}</div>
     <div class="two">${fld('v_spo2','الأكسجة %','number','','inputmode="numeric"')}${fld('v_glu','السكر ملغ/دل','number','','inputmode="numeric"')}</div>
+    <div class="two">${fld('v_uo','الصادر البولي (مل)','number','','inputmode="numeric"')}${fld('v_dr','المفجرات (مل)','number','','inputmode="numeric"')}</div>
+    ${fld('v_drn','ملاحظة المفجرات','text','','placeholder="مثلاً: مفجر تحت الكبد، مصلي دموي" autocomplete="off"')}
     <div id="ferr" class="errmsg" role="alert"></div>
     ${sheetBtns('saveVitals','حفظ القراءة')}`;
 }
@@ -562,10 +595,21 @@ function procForm(){
     <div id="ferr" class="errmsg" role="alert"></div>
     ${sheetBtns('saveProc','تسجيل')}`;
 }
+function labPicker(){
+  return `<div class="field"><label for="t_search">اختار التحاليل</label><input id="t_search" type="search" placeholder="ابحث عن تحليل، مثلاً: K أو CBC" autocomplete="off" dir="auto"></div>
+    <div class="tsel" id="tsel" aria-live="polite">ما في تحاليل مختارة</div>
+    <div id="tlist">${LAB_GROUPS.map(g=>`<div class="tgroup"><h4 dir="auto">${esc(g.name)}</h4><div class="chips">${g.tests.map(t=>`<button class="chip" dir="ltr" data-a="toggleTest" data-id="${esc(t)}" aria-pressed="false">${esc(t)}</button>`).join('')}</div></div>`).join('')}</div>
+    ${area('o_text','تحاليل أخرى','','إذا التحليل مش بالقائمة، اكتبه هون')}`;
+}
+function updateTsel(){
+  const s = [...pending.tests];
+  $('#tsel').textContent = s.length ? 'مختار (' + s.length + '): ' + s.join('، ') : 'ما في تحاليل مختارة';
+  $('#tsel').classList.toggle('on', s.length > 0);
+}
 function orderForm(type){
   return `<h2>${type==='lab'?'طلب تحليل':'طلب أشعة'}</h2>
     <div class="chips" role="group" aria-label="الأولوية"><button class="chip" data-a="prio" data-id="normal" aria-pressed="true">عادي</button><button class="chip" data-a="prio" data-id="urgent" aria-pressed="false">إسعافي</button></div>
-    ${area('o_text', type==='lab'?'التحاليل المطلوبة':'الصورة المطلوبة', '', type==='lab'?'مثلاً: CBC، كرياتينين، بوتاسيوم':'مثلاً: صورة صدر بسيطة، إيكو بطن')}
+    ${type==='lab' ? labPicker() : area('o_text','الصورة المطلوبة','','مثلاً: صورة صدر بسيطة، إيكو بطن')}
     <div class="field"><label for="o_file">صورة مع الطلب (اختيارية)</label><input id="o_file" type="file" accept="image/*"><span class="hint">مثلاً صورة ورقة الطلب.</span></div>
     <div id="oprev" class="thumbs"></div>
     <div id="ferr" class="errmsg" role="alert"></div>
@@ -574,7 +618,7 @@ function orderForm(type){
 }
 
 /* file reading */
-const pending = { order:[], respond:[] };
+const pending = { order:[], respond:[], tests:new Set() };
 function readFiles(input, bucket, prevSel){
   pending[bucket] = [];
   const files = [...input.files].slice(0,6);
@@ -618,7 +662,7 @@ document.addEventListener('click', e => {
     case 'doDischarge': p.discharge_summary = $('#d_sum').value.trim(); p.status='discharged'; p.discharged_at = Date.now(); closeSheet(); toast('خرج المريض'); render(); break;
 
     case 'addVitals': openSheet(vitalsForm()); break;
-    case 'saveVitals': { const r = {sys:num('v_sys'), dia:num('v_dia'), hr:num('v_hr'), rr:num('v_rr'), t:num('v_t'), spo2:num('v_spo2'), glu:num('v_glu')}; if (Object.values(r).every(x=>x==null)){ $('#ferr').textContent='عبّي قيمة وحدة على الأقل.'; return; } p.vitals.push(Object.assign({id:id(), at:Date.now(), by:me().id}, r)); closeSheet(); S.ptab='vitals'; toast('انحفظت القراءة'); render(); break; }
+    case 'saveVitals': { const r = {sys:num('v_sys'), dia:num('v_dia'), hr:num('v_hr'), rr:num('v_rr'), t:num('v_t'), spo2:num('v_spo2'), glu:num('v_glu'), uo:num('v_uo'), dr:num('v_dr')}; const drn = $('#v_drn').value.trim(); if (Object.values(r).every(x=>x==null)){ $('#ferr').textContent='عبّي قيمة وحدة على الأقل.'; return; } p.vitals.push(Object.assign({id:id(), at:Date.now(), by:me().id, drn}, r)); closeSheet(); S.ptab='vitals'; toast('انحفظت القراءة'); render(); break; }
     case 'addNote': openSheet(`<h2>ملاحظة متابعة</h2>${area('n_text','الملاحظة','','وضع المريض اليوم، الفحص، الخطة')}<div id="ferr" class="errmsg" role="alert"></div>${sheetBtns('saveNote','حفظ الملاحظة')}`); break;
     case 'saveNote': { const t = $('#n_text').value.trim(); if(!t){ $('#ferr').textContent='اكتب الملاحظة أول.'; return; } p.notes.push({id:id(), at:Date.now(), by:me().id, text:t}); closeSheet(); S.ptab='notes'; toast('انحفظت الملاحظة'); render(); break; }
     case 'addProc': openSheet(procForm()); break;
@@ -626,9 +670,10 @@ document.addEventListener('click', e => {
     case 'saveProc': { const t = $('#pr_type').value.trim(); if(!t){ $('#ferr').textContent='اختار أو اكتب نوع الإجراء.'; return; } p.procedures.push({id:id(), at:Date.now(), by:me().id, type:t, notes:$('#pr_notes').value.trim()}); closeSheet(); S.ptab='proc'; toast('انسجل الإجراء'); render(); break; }
 
     case 'quickOrder': openSheet(`<h2>شو بدك تطلب؟</h2><div class="pick"><button class="btn primary" data-a="newOrder" data-id="lab">${icon.tube}طلب تحليل</button><button class="btn primary" data-a="newOrder" data-id="radiology">${icon.xray}طلب أشعة</button></div><div class="sheet-actions"><button class="btn" data-a="closeSheet">إلغاء</button></div>`); break;
-    case 'newOrder': pending.order = []; openSheet(orderForm(idv)); break;
+    case 'newOrder': pending.order = []; pending.tests = new Set(); openSheet(orderForm(idv)); break;
+    case 'toggleTest': { const on = !pending.tests.has(idv); on ? pending.tests.add(idv) : pending.tests.delete(idv); document.querySelectorAll('[data-a="toggleTest"]').forEach(c => { if (c.dataset.id===idv) c.setAttribute('aria-pressed', on); }); updateTsel(); break; }
     case 'prio': $('#o_prio').value = idv; document.querySelectorAll('[data-a="prio"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); break;
-    case 'saveOrder': { const t = $('#o_text').value.trim(); if(!t && !pending.order.length){ $('#ferr').textContent='اكتب الطلب أو ارفق صورة.'; return; } const type = $('#o_type').value; addO({patient:p.id, type, by:me().id, at:Date.now(), priority:$('#o_prio').value, request_text:t, request_files:pending.order.slice()}); closeSheet(); S.ptab='orders'; toast(type==='lab'?'انبعت الطلب للمخبر':'انبعت الطلب للأشعة'); render(); break; }
+    case 'saveOrder': { const t = $('#o_text').value.trim(); if(!t && !pending.order.length && !pending.tests.size){ $('#ferr').textContent='اختار تحليل أو اكتب الطلب أو ارفق صورة.'; return; } const type = $('#o_type').value; addO({patient:p.id, type, by:me().id, at:Date.now(), priority:$('#o_prio').value, tests:type==='lab'?[...pending.tests]:[], request_text:t, request_files:pending.order.slice()}); closeSheet(); S.ptab='orders'; toast(type==='lab'?'انبعت الطلب للمخبر':'انبعت الطلب للأشعة'); render(); break; }
     case 'cancelOrder': { const o = oById(idv); o.status='cancelled'; toast('انلغى الطلب'); render(); break; }
 
     case 'respond': { const o = oById(idv); const t = $('#rt').value.trim(); if(!t && !pending.respond.length){ $('#rerr').textContent='ارفق ملف النتيجة أو اكتب ملاحظة.'; return; } Object.assign(o, {status:'completed', response_text:t, response_files:pending.respond.slice(), responded_by:me().id, completed_at:Date.now(), seen:false}); pending.respond=[]; toast('انبعتت النتيجة للطبيب'); back(); break; }
@@ -636,6 +681,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id==='q'){ S.search = e.target.value; $('#rows').innerHTML = rowsHTML(); }
+  if (e.target.id==='t_search'){ const q = e.target.value.trim().toLowerCase(); const first = document.querySelector('#tlist .tgroup'); document.querySelectorAll('#tlist .tgroup').forEach(g => { let any = false; g.querySelectorAll('.chip').forEach(c => { const m = !q || c.dataset.id.toLowerCase().includes(q); c.hidden = !m; any = any || m; }); g.hidden = !any || (!!q && g === first); }); }
 });
 document.addEventListener('change', e => {
   if (e.target.id==='o_file') readFiles(e.target, 'order', '#oprev');
