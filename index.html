@@ -178,7 +178,7 @@ details.more summary{cursor:pointer;font-weight:600}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
 .lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
 .lightbox button{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));inset-inline-start:14px}
-.qbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 -2px 12px rgba(15,36,64,.07)}
+.qbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 -2px 12px rgba(15,36,64,.07)}
 .qbar button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;cursor:pointer;color:var(--primary);font-size:13px;font-weight:600;border-radius:12px}
 .qbar button:active{background:var(--primary-soft)}
 .qbar svg{width:26px;height:26px}
@@ -230,6 +230,17 @@ function ago(t){
   return dd === 1 ? 'مبارح' : 'من ' + dd + ' أيام';
 }
 function age(b){ if(!b) return null; const x = new Date(b); const n = new Date(); let a = n.getFullYear()-x.getFullYear(); if (n < new Date(n.getFullYear(), x.getMonth(), x.getDate())) a--; return a; }
+const plural = (n, one, many) => (n >= 3 && n <= 10) ? many : one;
+function ageText(b){
+  if (!b) return null;
+  const x = new Date(b), n = new Date();
+  if (isNaN(x) || x > n) return null;
+  const days = Math.floor((n - x) / D);
+  if (days < 31) return days + ' ' + plural(days, 'يوم', 'أيام');
+  let m = (n.getFullYear()-x.getFullYear())*12 + n.getMonth() - x.getMonth(); if (n.getDate() < x.getDate()) m--;
+  if (m < 24) return m + ' ' + plural(m, 'شهر', 'أشهر');
+  const y = age(b); return y + ' ' + plural(y, 'سنة', 'سنوات');
+}
 const dayNo = t => Math.floor((Date.now()-t)/D)+1;
 const icon = {
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
@@ -413,11 +424,11 @@ function rowsHTML(){
     .sort((a,b)=> a.bed_number.localeCompare(b.bed_number, 'en', {numeric:true}));
   if (!list.length) return `<div class="empty">${q ? 'ما في مريض بهالاسم أو الرقم.' : (S.tab==='admitted' ? 'ما في مرضى مقبولين. زيد مريض من الزر تحت.' : 'ما في مرضى مخرّجين.')}</div>`;
   return list.map(p => {
-    const a = age(p.birth_date), nr = newResults(p), pd = pendingOf(p);
+    const a = ageText(p.birth_date), nr = newResults(p), pd = pendingOf(p);
     return `<button class="row" data-a="open" data-id="${p.id}">
       <span class="bed ${p.status==='discharged'?'off':''}"><small>سرير</small><b>${esc(p.bed_number||'–')}</b></span>
       <span class="info" style="display:block"><span class="name">${esc(p.full_name)}</span>
-        <span class="meta"> · ${esc(p.file_number)}${a!=null?' · '+a+' سنة':''} · ${p.gender==='male'?'ذكر':'أنثى'}</span>
+        <span class="meta"> · ${esc(p.file_number)}${a?' · '+a:''} · ${p.gender==='male'?'ذكر':'أنثى'}</span>
         <span class="dx">${esc(p.admission_diagnosis||'بدون تشخيص')}</span>
         <span class="flags">${p.allergies?`<span class="tag alert">حساسية</span>`:''}${nr?`<span class="tag ok">${nr} نتيجة جديدة</span>`:''}${pd?`<span class="tag amber">${pd} بالانتظار</span>`:''}${p.status==='admitted'?`<span class="tag muted">اليوم ${dayNo(p.admission_date)}</span>`:''}</span>
       </span></button>`;
@@ -426,30 +437,31 @@ function rowsHTML(){
 
 /* doctor: patient file */
 function patientView(p){
-  const a = age(p.birth_date), att = USERS[p.attending];
+  const a = ageText(p.birth_date), att = USERS[p.attending];
   const orders = ordersOf(p), nr = newResults(p);
-  const tabs = [['file','الملف'],['vitals','العلامات الحيوية'],['notes','المتابعة'],['proc','الإجراءات'],['orders','الطلبات']];
+  const tabs = [['file','الملف'],['vitals','العلامات الحيوية'],['notes','المتابعة'],['proc','الإجراءات'],['lab','التحاليل'],['rad','الأشعة']];
+  const newOf = k => orders.filter(o => o.type===(k==='lab'?'lab':'radiology') && o.status==='completed' && !o.seen).length;
   let body = '';
   if (S.ptab==='file') body = fileTab(p);
   else if (S.ptab==='vitals') body = vitalsTab(p);
   else if (S.ptab==='notes') body = notesTab(p);
   else if (S.ptab==='proc') body = procTab(p);
-  else body = ordersTab(p, orders);
+  else body = ordersTab(p, orders.filter(o => o.type===(S.ptab==='lab'?'lab':'radiology')), S.ptab==='lab'?'lab':'radiology');
   return `<div class="phead"><span class="bed lg ${p.status==='discharged'?'off':''}"><small>سرير</small><b>${esc(p.bed_number||'–')}</b></span>
     <div><div class="name">${esc(p.full_name)}</div>
     ${p.category?`<span class="tag muted" style="display:inline-block;margin:2px 0 4px">${esc(CATS[p.category])}</span>`:''}
-    <div class="meta">${a!=null?a+' سنة · ':''}${p.gender==='male'?'ذكر':'أنثى'} · إضبارة ${esc(p.file_number)}</div>
+    <div class="meta">${a?a+' · ':''}${p.gender==='male'?'ذكر':'أنثى'} · إضبارة ${esc(p.file_number)}</div>
     <div class="meta">${p.status==='admitted' ? 'قبول ' + d(p.admission_date) + ' · اليوم ' + dayNo(p.admission_date) : 'خرج ' + d(p.discharged_at)}${att?' · '+esc(att.name):''}</div></div></div>
   ${p.allergies ? `<div class="allergy" role="alert">${icon.warn}<span>حساسية: ${esc(p.allergies)}</span></div>` : `<div class="allergy none">ما في حساسية مسجلة</div>`}
-  <div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-a="ptab" data-id="${k}" aria-selected="${S.ptab===k}">${l}${k==='orders'&&nr?`<span class="n">${nr}</span>`:''}</button>`).join('')}</div>
+  <div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-a="ptab" data-id="${k}" aria-selected="${S.ptab===k}">${l}${(k==='lab'||k==='rad')&&newOf(k)?`<span class="n">${newOf(k)}</span>`:''}</button>`).join('')}</div>
   ${body}
-  ${p.status==='admitted' ? `<nav class="qbar" aria-label="إضافة سريعة"><button data-a="addVitals">${icon.pulse}<span>علامات حيوية</span></button><button data-a="addNote">${icon.note}<span>ملاحظة</span></button><button data-a="addProc">${icon.hand}<span>إجراء</span></button><button data-a="quickOrder">${icon.tube}<span>تحليل / أشعة</span></button></nav>` : ''}`;
+  ${p.status==='admitted' ? `<nav class="qbar" aria-label="إضافة سريعة"><button data-a="addVitals">${icon.pulse}<span>علامات حيوية</span></button><button data-a="addNote">${icon.note}<span>ملاحظة</span></button><button data-a="addProc">${icon.hand}<span>إجراء</span></button><button data-a="newOrder" data-id="lab">${icon.tube}<span>تحليل</span></button><button data-a="newOrder" data-id="radiology">${icon.xray}<span>أشعة</span></button></nav>` : ''}`;
 }
 const HIST = [['chronic_diseases','مرضية'],['surgical_history','جراحية'],['allergies','تحسسية'],['medications','دوائية'],['family_history','عائلية'],['social_history','اجتماعية']];
 function fileTab(p){
   return `<div class="card"><h3>التشخيص وسبب القبول</h3><p>${esc(p.admission_diagnosis||'—')}</p></div>
   <div class="card"><h3>السوابق</h3><dl class="dl">${HIST.map(([k,l])=>`<dt>${l}</dt><dd class="${p[k]?'':'none'}">${esc(p[k]||'لا يوجد')}</dd>`).join('')}</dl></div>
-  <div class="card"><h3>معلومات إضافية</h3><dl class="dl"><dt>الصفة الاعتبارية</dt><dd>${esc(CATS[p.category]||'—')}</dd><dt>السكن</dt><dd>${esc(p.residence||'—')}</dd><dt>تاريخ الميلاد</dt><dd>${p.birth_date?d(p.birth_date):'—'}</dd><dt>الهاتف</dt><dd>${esc(p.phone||'—')}</dd><dt>الطبيب المسؤول</dt><dd>${esc(USERS[p.attending]?.name||'—')}</dd></dl></div>
+  <div class="card"><h3>معلومات إضافية</h3><dl class="dl"><dt>الصفة الاعتبارية</dt><dd>${esc(CATS[p.category]||'—')}</dd><dt>السكن</dt><dd>${esc(p.residence||'—')}</dd><dt>تاريخ الميلاد</dt><dd>${p.birth_date?d(p.birth_date):'—'}</dd><dt>العمر</dt><dd>${esc(ageText(p.birth_date)||'—')}</dd><dt>الهاتف</dt><dd>${esc(p.phone||'—')}</dd><dt>الطبيب المسؤول</dt><dd>${esc(USERS[p.attending]?.name||'—')}</dd></dl></div>
   ${p.status==='discharged' ? `<div class="card"><h3>ملخص الخروج</h3><p>${esc(p.discharge_summary||'—')}</p></div>` : ''}
   <div class="actions"><button class="btn" data-a="editPatient">تعديل المعلومات</button>${p.status==='admitted'?`<button class="btn danger" data-a="discharge">تخريج المريض</button>`:''}</div>`;
 }
@@ -499,8 +511,8 @@ function orderCard(o, forDoctor){
     ${forDoctor && o.status==='pending' ? `<div class="actions" style="margin:10px 0 0"><button class="btn danger" data-a="cancelOrder" data-id="${o.id}">إلغاء الطلب</button></div>` : ''}
   </div>`;
 }
-function ordersTab(p, orders){
-  const html =     (orders.length ? orders.map(o=>orderCard(o,true)).join('') : `<div class="empty">ما في طلبات لهالمريض.</div>`);
+function ordersTab(p, orders, type){
+  const html =     (orders.length ? orders.map(o=>orderCard(o,true)).join('') : `<div class="empty">${type==='lab'?'ما في طلبات تحاليل لهالمريض. اطلب من زر تحليل تحت.':'ما في طلبات أشعة لهالمريض. اطلب من زر أشعة تحت.'}</div>`);
   orders.forEach(o => { if (o.status==='completed') o.seen = true; });
   return html;
 }
@@ -550,6 +562,7 @@ function patientForm(p){
     ${fld('f_name','الاسم الكامل *','text',v('full_name'),'autocomplete="off"')}
     <div class="two">${fld('f_file','رقم الإضبارة *','text',v('file_number'),'inputmode="numeric" autocomplete="off"')}${fld('f_bed','رقم السرير','text',v('bed_number'),'autocomplete="off"')}</div>
     <div class="two"><div class="field"><label for="f_gender">الجنس *</label><select id="f_gender"><option value="">اختار</option><option value="male" ${v('gender')==='male'?'selected':''}>ذكر</option><option value="female" ${v('gender')==='female'?'selected':''}>أنثى</option></select></div>${fld('f_birth','تاريخ الميلاد','date',v('birth_date'))}</div>
+    <p class="when" id="f_age" aria-live="polite" style="margin:-6px 0 12px">${p&&p.birth_date&&ageText(p.birth_date)?'العمر: '+ageText(p.birth_date):''}</p>
     <div class="field"><label for="f_cat">الصفة الاعتبارية *</label><select id="f_cat"><option value="">اختار</option>${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${v('category')===k?'selected':''}>${l}</option>`).join('')}</select></div>
     ${fld('f_res','السكن','text',v('residence'),'placeholder="المدينة – المنطقة" autocomplete="off"')}
     ${fld('f_phone','الهاتف','tel',v('phone'))}
@@ -673,7 +686,7 @@ document.addEventListener('click', e => {
     case 'newOrder': pending.order = []; pending.tests = new Set(); openSheet(orderForm(idv)); break;
     case 'toggleTest': { const on = !pending.tests.has(idv); on ? pending.tests.add(idv) : pending.tests.delete(idv); document.querySelectorAll('[data-a="toggleTest"]').forEach(c => { if (c.dataset.id===idv) c.setAttribute('aria-pressed', on); }); updateTsel(); break; }
     case 'prio': $('#o_prio').value = idv; document.querySelectorAll('[data-a="prio"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); break;
-    case 'saveOrder': { const t = $('#o_text').value.trim(); if(!t && !pending.order.length && !pending.tests.size){ $('#ferr').textContent='اختار تحليل أو اكتب الطلب أو ارفق صورة.'; return; } const type = $('#o_type').value; addO({patient:p.id, type, by:me().id, at:Date.now(), priority:$('#o_prio').value, tests:type==='lab'?[...pending.tests]:[], request_text:t, request_files:pending.order.slice()}); closeSheet(); S.ptab='orders'; toast(type==='lab'?'انبعت الطلب للمخبر':'انبعت الطلب للأشعة'); render(); break; }
+    case 'saveOrder': { const t = $('#o_text').value.trim(); if(!t && !pending.order.length && !pending.tests.size){ $('#ferr').textContent='اختار تحليل أو اكتب الطلب أو ارفق صورة.'; return; } const type = $('#o_type').value; addO({patient:p.id, type, by:me().id, at:Date.now(), priority:$('#o_prio').value, tests:type==='lab'?[...pending.tests]:[], request_text:t, request_files:pending.order.slice()}); closeSheet(); S.ptab = type==='lab' ? 'lab' : 'rad'; toast(type==='lab'?'انبعت الطلب للمخبر':'انبعت الطلب للأشعة'); render(); break; }
     case 'cancelOrder': { const o = oById(idv); o.status='cancelled'; toast('انلغى الطلب'); render(); break; }
 
     case 'respond': { const o = oById(idv); const t = $('#rt').value.trim(); if(!t && !pending.respond.length){ $('#rerr').textContent='ارفق ملف النتيجة أو اكتب ملاحظة.'; return; } Object.assign(o, {status:'completed', response_text:t, response_files:pending.respond.slice(), responded_by:me().id, completed_at:Date.now(), seen:false}); pending.respond=[]; toast('انبعتت النتيجة للطبيب'); back(); break; }
@@ -681,6 +694,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.id==='q'){ S.search = e.target.value; $('#rows').innerHTML = rowsHTML(); }
+  if (e.target.id==='f_birth'){ const t = ageText(e.target.value); $('#f_age').textContent = t ? 'العمر: ' + t : ''; }
   if (e.target.id==='t_search'){ const q = e.target.value.trim().toLowerCase(); const first = document.querySelector('#tlist .tgroup'); document.querySelectorAll('#tlist .tgroup').forEach(g => { let any = false; g.querySelectorAll('.chip').forEach(c => { const m = !q || c.dataset.id.toLowerCase().includes(q); c.hidden = !m; any = any || m; }); g.hidden = !any || (!!q && g === first); }); }
 });
 document.addEventListener('change', e => {
