@@ -178,7 +178,7 @@ details.more summary{cursor:pointer;font-weight:600}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
 .lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
 .lightbox button{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));inset-inline-start:14px}
-.qbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 -2px 12px rgba(15,36,64,.07)}
+.qbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 -2px 12px rgba(15,36,64,.07)}
 .qbar button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;cursor:pointer;color:var(--primary);font-size:13px;font-weight:600;border-radius:12px}
 .qbar button:active{background:var(--primary-soft)}
 .qbar svg{width:26px;height:26px}
@@ -196,6 +196,9 @@ details.more summary{cursor:pointer;font-weight:600}
 .tsel{position:sticky;top:-16px;z-index:1;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;color:var(--ink-2);margin-bottom:4px}
 .tsel.on{background:var(--primary-soft);color:var(--head-ink);font-weight:600;border-color:#B3E5FC}
 .chip[hidden],.tgroup[hidden]{display:none}
+.btn svg{width:20px;height:20px;vertical-align:-5px;margin-inline-end:6px}
+.field[hidden]{display:none}
+.flabel{font-size:14px;font-weight:500;margin:0 0 6px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -254,6 +257,8 @@ const icon = {
   pulse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>',
   note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>',
   hand:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/></svg>',
+  nurse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/><path d="M12 5.5v5M9.5 8h5"/></svg>',
+  consult:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
 };
 
@@ -279,13 +284,20 @@ const USERS = {
   2:{id:2, name:'د. لينا حداد', role:'doctor', dept:1},
   3:{id:3, name:'د. رامي العلي', role:'doctor', dept:2},
   4:{id:4, name:'عبير – المخبر', role:'lab', dept:3},
-  5:{id:5, name:'وسيم – الأشعة', role:'radiology', dept:4}
+  5:{id:5, name:'وسيم – الأشعة', role:'radiology', dept:4},
+  6:{id:6, name:'م. سارة يوسف', role:'nurse', dept:1},
+  7:{id:7, name:'م. علي حسن', role:'nurse', dept:2},
+  8:{id:8, name:'د. مازن عطية', role:'consultant', spec:'cardio'},
+  9:{id:9, name:'د. ريما سلوم', role:'consultant', spec:'infect'}
 };
 const ROLE_CARDS = [
   {user:1, title:'طبيب جراحة', desc:'مرضى قسم الجراحة العامة', ic:'steth'},
   {user:3, title:'طبيب تخدير وعناية', desc:'مرضى قسم التخدير والعناية', ic:'mask'},
+  {user:6, title:'ممرض/ة جراحة', desc:'علامات حيوية وإجراءات لمرضى الجراحة', ic:'nurse'},
   {user:4, title:'المخبر', desc:'طلبات التحاليل الواردة', ic:'tube'},
-  {user:5, title:'الأشعة', desc:'طلبات الأشعة الواردة', ic:'xray'}
+  {user:5, title:'الأشعة', desc:'طلبات الأشعة الواردة', ic:'xray'},
+  {user:8, title:'استشاري قلبية', desc:'طلبات الاستشارة القلبية', ic:'consult'},
+  {user:9, title:'استشاري إنتانية', desc:'طلبات الاستشارة الإنتانية', ic:'consult'}
 ];
 
 let seq = 100;
@@ -359,6 +371,15 @@ addO({patient:p8.id, type:'radiology', by:3, at:NOW-4*H, priority:'urgent', requ
 addO({patient:p8.id, type:'lab', by:3, at:NOW-40*60e3, priority:'urgent', tests:['Blood Gases'], request_text:'لاكتات', status:'pending'});
 addO({patient:p6.id, type:'lab', by:2, at:NOW-6*H, tests:['Amylase','ALT','AST','ALP','GGT','Bilirubin (Total)'], request_text:'ليباز', status:'pending'});
 
+/* consultations */
+const SPECS = {infect:'إنتانية', chest:'صدرية', cardio:'قلبية', renal:'كلوية', neuro:'عصبية', gi:'هضمية', endo:'غدية', hema:'دموية', neurosurg:'جراحة عصبية', ortho:'عظمية'};
+const C = [];
+function addC(o){ const x = Object.assign({id:id(), status:'pending', priority:'normal', question:'', other:'', response:'', responded_by:null, responded_at:null, seen:true}, o); C.push(x); return x; }
+addC({patient:p8.id, spec:'infect', by:3, at:NOW-20*H, priority:'urgent', question:'صدمة إنتانية بعد استئصال كولون، حرارة مستمرة رغم بيبراسيلين/تازوباكتام 48 ساعة. حساسية فانكومايسين. نرجو اقتراح الصادات.', status:'answered', responded_by:9, responded_at:NOW-16*H, response:'إيقاف بيبراسيلين/تازوباكتام والبدء بميروبينيم. لينزوليد بدل الفانكومايسين إذا لزمت تغطية MRSA. زرع دم مكرر وزرع من المفجر، وإعادة التقييم بعد 48 ساعة حسب الزروع.', seen:false});
+addC({patient:p3.id, spec:'cardio', by:1, at:NOW-3*H, question:'رجفان أذيني مزمن على وارفارين، INR حالياً 3.4 والنبض 110. نرجو تقييم ضبط النظم وخطة التمييع حول احتمال الجراحة.'});
+addC({patient:p5.id, spec:'cardio', by:1, at:NOW-5*H, priority:'urgent', question:'تقييم قلبي قبل عملية فتق مختنق إسعافية. ارتفاع ضغط غير معالج.', status:'answered', responded_by:8, responded_at:NOW-4*H, response:'تخطيط القلب نظم جيبي بدون علامات إقفار. لا مانع قلبي من العملية. ضبط الضغط بعد العملية والمتابعة بالعيادة.'});
+addC({patient:p9.id, spec:'chest', by:3, at:NOW-2*H, question:'ارتشاح قاعدي أيسر بعد استئصال الطحال، نرجو التقييم.'});
+
 /* ---------- state ---------- */
 const S = { user:null, stack:[], tab:'admitted', search:'', ptab:'file', qtab:'pending' };
 const me = () => USERS[S.user];
@@ -371,6 +392,14 @@ const oById = i => O.find(o => o.id === +i);
 const ordersOf = p => O.filter(o => o.patient === p.id).sort((a,b)=>b.at-a.at);
 const newResults = p => ordersOf(p).filter(o => o.status==='completed' && !o.seen).length;
 const pendingOf = p => ordersOf(p).filter(o => o.status==='pending').length;
+const consultsOf = p => C.filter(c => c.patient === p.id).sort((a,b)=>b.at-a.at);
+const newConsults = p => consultsOf(p).filter(c => c.status==='answered' && !c.seen).length;
+const cById = i => C.find(c => c.id === +i);
+const specName = c => c.spec==='other' ? (c.other || 'أخرى') : SPECS[c.spec];
+// الصلاحيات: أي شي مش مذكور هون بس للطبيب
+const PERMS = {addVitals:['doctor','nurse'], addProc:['doctor','nurse']};
+const can = a => (PERMS[a] || ['doctor']).includes(me()?.role);
+const homeOf = r => (r==='doctor'||r==='nurse') ? 'list' : r==='consultant' ? 'cqueue' : 'queue';
 
 function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2200); }
 
@@ -392,6 +421,8 @@ function render(){
   else if (v.name==='patient'){ const p = pById(v.id); title = p.full_name; sub = 'إضبارة ' + p.file_number; }
   else if (v.name==='queue'){ title = me().role==='lab' ? 'طلبات المخبر' : 'طلبات الأشعة'; sub = me().name; }
   else if (v.name==='order'){ const o = oById(v.id); title = (o.type==='lab'?'طلب تحليل':'طلب أشعة') + ' #' + o.id; sub = pById(o.patient).full_name; }
+  else if (v.name==='cqueue'){ title = 'الاستشارات ال' + SPECS[me().spec]; sub = me().name; }
+  else if (v.name==='consult'){ const c = cById(v.id); title = 'استشارة ' + specName(c); sub = pById(c.patient).full_name; }
   top.innerHTML = `${canBack?`<button class="iconbtn" data-a="back" aria-label="رجوع">${icon.back}</button>`:''}
     <div class="grow"><h1>${esc(title)}</h1><div class="sub">${esc(sub)}</div></div>
     <button class="rolebtn" data-a="logout">تبديل الدور</button>`;
@@ -399,6 +430,8 @@ function render(){
   else if (v.name==='patient') main.innerHTML = patientView(pById(v.id));
   else if (v.name==='queue') main.innerHTML = queueView();
   else if (v.name==='order') main.innerHTML = orderView(oById(v.id));
+  else if (v.name==='cqueue') main.innerHTML = cqueueView();
+  else if (v.name==='consult') main.innerHTML = consultView(cById(v.id));
 }
 
 function loginView(){
@@ -416,7 +449,7 @@ function listView(){
     <button data-a="tab" data-id="discharged" aria-pressed="${S.tab==='discharged'}">مخرّجين (${nD})</button>
   </div>
   <div id="rows" class="rows">${rowsHTML()}</div>
-  <button class="fab" data-a="addPatient">${icon.plus}مريض جديد</button>`;
+  ${can('addPatient') ? `<button class="fab" data-a="addPatient">${icon.plus}مريض جديد</button>` : ''}`;
 }
 function rowsHTML(){
   const q = S.search.trim();
@@ -430,7 +463,7 @@ function rowsHTML(){
       <span class="info" style="display:block"><span class="name">${esc(p.full_name)}</span>
         <span class="meta"> · ${esc(p.file_number)}${a?' · '+a:''} · ${p.gender==='male'?'ذكر':'أنثى'}</span>
         <span class="dx">${esc(p.admission_diagnosis||'بدون تشخيص')}</span>
-        <span class="flags">${p.allergies?`<span class="tag alert">حساسية</span>`:''}${nr?`<span class="tag ok">${nr} نتيجة جديدة</span>`:''}${pd?`<span class="tag amber">${pd} بالانتظار</span>`:''}${p.status==='admitted'?`<span class="tag muted">اليوم ${dayNo(p.admission_date)}</span>`:''}</span>
+        <span class="flags">${p.allergies?`<span class="tag alert">حساسية</span>`:''}${nr?`<span class="tag ok">${nr} نتيجة جديدة</span>`:''}${newConsults(p)?`<span class="tag ok">رد استشارة</span>`:''}${pd?`<span class="tag amber">${pd} بالانتظار</span>`:''}${p.status==='admitted'?`<span class="tag muted">اليوم ${dayNo(p.admission_date)}</span>`:''}</span>
       </span></button>`;
   }).join('');
 }
@@ -439,13 +472,15 @@ function rowsHTML(){
 function patientView(p){
   const a = ageText(p.birth_date), att = USERS[p.attending];
   const orders = ordersOf(p), nr = newResults(p);
-  const tabs = [['file','الملف'],['vitals','العلامات الحيوية'],['notes','المتابعة'],['proc','الإجراءات'],['lab','التحاليل'],['rad','الأشعة']];
+  const tabs = [['file','الملف'],['vitals','العلامات الحيوية'],['notes','المتابعة'],['proc','الإجراءات'],['lab','التحاليل'],['rad','الأشعة'],['consult','الاستشارات']];
   const newOf = k => orders.filter(o => o.type===(k==='lab'?'lab':'radiology') && o.status==='completed' && !o.seen).length;
+  const badge = k => (k==='lab'||k==='rad') ? newOf(k) : k==='consult' ? newConsults(p) : 0;
   let body = '';
   if (S.ptab==='file') body = fileTab(p);
   else if (S.ptab==='vitals') body = vitalsTab(p);
   else if (S.ptab==='notes') body = notesTab(p);
   else if (S.ptab==='proc') body = procTab(p);
+  else if (S.ptab==='consult') body = consultTab(p);
   else body = ordersTab(p, orders.filter(o => o.type===(S.ptab==='lab'?'lab':'radiology')), S.ptab==='lab'?'lab':'radiology');
   return `<div class="phead"><span class="bed lg ${p.status==='discharged'?'off':''}"><small>سرير</small><b>${esc(p.bed_number||'–')}</b></span>
     <div><div class="name">${esc(p.full_name)}</div>
@@ -453,9 +488,9 @@ function patientView(p){
     <div class="meta">${a?a+' · ':''}${p.gender==='male'?'ذكر':'أنثى'} · إضبارة ${esc(p.file_number)}</div>
     <div class="meta">${p.status==='admitted' ? 'قبول ' + d(p.admission_date) + ' · اليوم ' + dayNo(p.admission_date) : 'خرج ' + d(p.discharged_at)}${att?' · '+esc(att.name):''}</div></div></div>
   ${p.allergies ? `<div class="allergy" role="alert">${icon.warn}<span>حساسية: ${esc(p.allergies)}</span></div>` : `<div class="allergy none">ما في حساسية مسجلة</div>`}
-  <div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-a="ptab" data-id="${k}" aria-selected="${S.ptab===k}">${l}${(k==='lab'||k==='rad')&&newOf(k)?`<span class="n">${newOf(k)}</span>`:''}</button>`).join('')}</div>
+  <div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-a="ptab" data-id="${k}" aria-selected="${S.ptab===k}">${l}${badge(k)?`<span class="n">${badge(k)}</span>`:''}</button>`).join('')}</div>
   ${body}
-  ${p.status==='admitted' ? `<nav class="qbar" aria-label="إضافة سريعة"><button data-a="addVitals">${icon.pulse}<span>علامات حيوية</span></button><button data-a="addNote">${icon.note}<span>ملاحظة</span></button><button data-a="addProc">${icon.hand}<span>إجراء</span></button><button data-a="newOrder" data-id="lab">${icon.tube}<span>تحليل</span></button><button data-a="newOrder" data-id="radiology">${icon.xray}<span>أشعة</span></button></nav>` : ''}`;
+  ${p.status==='admitted' ? `<nav class="qbar" aria-label="إضافة سريعة">${can('addVitals')?`<button data-a="addVitals">${icon.pulse}<span>علامات حيوية</span></button>`:''}${can('addNote')?`<button data-a="addNote">${icon.note}<span>ملاحظة</span></button>`:''}${can('addProc')?`<button data-a="addProc">${icon.hand}<span>إجراء</span></button>`:''}${can('order')?`<button data-a="newOrder" data-id="lab">${icon.tube}<span>تحليل</span></button><button data-a="newOrder" data-id="radiology">${icon.xray}<span>أشعة</span></button>`:''}</nav>` : ''}`;
 }
 const HIST = [['chronic_diseases','مرضية'],['surgical_history','جراحية'],['allergies','تحسسية'],['medications','دوائية'],['family_history','عائلية'],['social_history','اجتماعية']];
 function fileTab(p){
@@ -463,7 +498,7 @@ function fileTab(p){
   <div class="card"><h3>السوابق</h3><dl class="dl">${HIST.map(([k,l])=>`<dt>${l}</dt><dd class="${p[k]?'':'none'}">${esc(p[k]||'لا يوجد')}</dd>`).join('')}</dl></div>
   <div class="card"><h3>معلومات إضافية</h3><dl class="dl"><dt>الصفة الاعتبارية</dt><dd>${esc(CATS[p.category]||'—')}</dd><dt>السكن</dt><dd>${esc(p.residence||'—')}</dd><dt>تاريخ الميلاد</dt><dd>${p.birth_date?d(p.birth_date):'—'}</dd><dt>العمر</dt><dd>${esc(ageText(p.birth_date)||'—')}</dd><dt>الهاتف</dt><dd>${esc(p.phone||'—')}</dd><dt>الطبيب المسؤول</dt><dd>${esc(USERS[p.attending]?.name||'—')}</dd></dl></div>
   ${p.status==='discharged' ? `<div class="card"><h3>ملخص الخروج</h3><p>${esc(p.discharge_summary||'—')}</p></div>` : ''}
-  <div class="actions"><button class="btn" data-a="editPatient">تعديل المعلومات</button>${p.status==='admitted'?`<button class="btn danger" data-a="discharge">تخريج المريض</button>`:''}</div>`;
+  ${can('editPatient') ? `<div class="actions"><button class="btn" data-a="editPatient">تعديل المعلومات</button>${p.status==='admitted'?`<button class="btn danger" data-a="discharge">تخريج المريض</button>`:''}</div>` : ''}`;
 }
 const VF = [['sys','الانقباضي','ملم زئبق'],['dia','الانبساطي','ملم زئبق'],['hr','النبض','/د'],['rr','التنفس','/د'],['t','الحرارة','°م'],['spo2','الأكسجة','%'],['glu','السكر','ملغ/دل']];
 function vitalsTab(p){
@@ -512,12 +547,73 @@ function orderCard(o, forDoctor){
   </div>`;
 }
 function ordersTab(p, orders, type){
-  const html =     (orders.length ? orders.map(o=>orderCard(o,true)).join('') : `<div class="empty">${type==='lab'?'ما في طلبات تحاليل لهالمريض. اطلب من زر تحليل تحت.':'ما في طلبات أشعة لهالمريض. اطلب من زر أشعة تحت.'}</div>`);
-  orders.forEach(o => { if (o.status==='completed') o.seen = true; });
+  const html =     (orders.length ? orders.map(o=>orderCard(o,can('cancelOrder'))).join('') : `<div class="empty">${type==='lab'?'ما في طلبات تحاليل لهالمريض. اطلب من زر تحليل تحت.':'ما في طلبات أشعة لهالمريض. اطلب من زر أشعة تحت.'}</div>`);
+  if (isDoc()) orders.forEach(o => { if (o.status==='completed') o.seen = true; });
   return html;
 }
 
 /* lab / radiology */
+/* consultations */
+function consultCard(c, forDoctor){
+  const st = c.status==='pending' ? '<span class="tag amber">بالانتظار</span>' : c.status==='cancelled' ? '<span class="tag muted">ملغاة</span>' : `<span class="tag ok">${c.seen?'تم الرد':'رد جديد'}</span>`;
+  return `<div class="card order">
+    <div class="top-line"><span class="kind">استشارة ${esc(specName(c))}${c.priority==='urgent'?' <span class="tag alert">إسعافية</span>':''}</span>${st}</div>
+    <div class="when">${dt(c.at)} · طلب ${esc(USERS[c.by].name)}</div>
+    <div class="req"><p>${esc(c.question)}</p></div>
+    ${c.status==='answered' ? `<div class="resp"><div class="when">الرد ${dt(c.responded_at)} · ${esc(USERS[c.responded_by].name)}</div><p>${esc(c.response)}</p></div>` : ''}
+    ${forDoctor && c.status==='pending' ? `<div class="actions" style="margin:10px 0 0"><button class="btn danger" data-a="cancelConsult" data-id="${c.id}">إلغاء الاستشارة</button></div>` : ''}
+  </div>`;
+}
+function consultTab(p){
+  const list = consultsOf(p);
+  const html = (can('consult') && p.status==='admitted' ? `<div class="actions"><button class="btn primary" data-a="newConsult">${icon.consult}طلب استشارة</button></div>` : '') +
+    (list.length ? list.map(c => consultCard(c, can('consult'))).join('') : `<div class="empty">ما في استشارات لهالمريض.</div>`);
+  if (isDoc()) list.forEach(c => { if (c.status==='answered') c.seen = true; });
+  return html;
+}
+function consultForm(){
+  return `<h2>طلب استشارة</h2>
+    <p class="flabel">الاختصاص *</p>
+    <div class="chips" role="group" aria-label="الاختصاص">${Object.entries(SPECS).map(([k,l])=>`<button class="chip" data-a="pickSpec" data-id="${k}" aria-pressed="false">${l}</button>`).join('')}<button class="chip" data-a="pickSpec" data-id="other" aria-pressed="false">أخرى</button></div>
+    <div class="field" id="c_other_wrap" hidden><label for="c_other">اختصاص آخر</label><input id="c_other" type="text" autocomplete="off"></div>
+    <p class="flabel">الأولوية</p>
+    <div class="chips" role="group" aria-label="الأولوية"><button class="chip" data-a="cprio" data-id="normal" aria-pressed="true">عادية</button><button class="chip" data-a="cprio" data-id="urgent" aria-pressed="false">إسعافية</button></div>
+    ${area('c_q','سبب الاستشارة والسؤال *','','مثلاً: رجفان أذيني سريع، نرجو تقييم ضبط النظم')}
+    <div id="ferr" class="errmsg" role="alert"></div>
+    <input type="hidden" id="c_spec" value=""><input type="hidden" id="c_prio" value="normal">
+    ${sheetBtns('saveConsult','إرسال الاستشارة')}`;
+}
+function cqueueView(){
+  const mine = C.filter(c => c.spec === me().spec);
+  const pend = mine.filter(c=>c.status==='pending').sort((a,b)=> (b.priority==='urgent')-(a.priority==='urgent') || a.at-b.at);
+  const done = mine.filter(c=>c.status==='answered').sort((a,b)=>b.responded_at-a.responded_at);
+  const list = S.qtab==='pending' ? pend : done;
+  return `<div class="seg" role="group" aria-label="الاستشارات">
+    <button data-a="qtab" data-id="pending" aria-pressed="${S.qtab==='pending'}">بانتظار الرد (${pend.length})</button>
+    <button data-a="qtab" data-id="done" aria-pressed="${S.qtab==='done'}">تم الرد (${done.length})</button></div>
+  <div class="rows">${list.length ? list.map(c => { const p = pById(c.patient); return `<button class="row" data-a="openConsult" data-id="${c.id}">
+      <span class="bed"><small>سرير</small><b>${esc(p.bed_number)}</b></span>
+      <span class="info" style="display:block"><span class="name">${esc(p.full_name)}</span><span class="meta"> · ${esc(p.file_number)}</span>
+      <span class="meta blk">${esc(DEPTS[p.dept].name)} · ${S.qtab==='pending'?ago(c.at):'رد '+ago(c.responded_at)} · ${esc(USERS[c.by].name)}</span>
+      <span class="dx">${esc(c.question)}</span>
+      <span class="flags">${c.priority==='urgent'?'<span class="tag alert">إسعافية</span>':''}</span></span></button>`; }).join('') : `<div class="empty">${S.qtab==='pending'?'ما في استشارات بالانتظار.':'ما في استشارات مردود عليها لسا.'}</div>`}</div>`;
+}
+function consultView(c){
+  const p = pById(c.patient), a = ageText(p.birth_date);
+  const L = [...p.vitals].sort((x,y)=>y.at-x.at)[0];
+  const hist = HIST.filter(([k])=>p[k]).map(([k,l])=>`<dt>${l}</dt><dd>${esc(p[k])}</dd>`).join('');
+  return `<div class="phead"><span class="bed lg"><small>سرير</small><b>${esc(p.bed_number)}</b></span><div><div class="name">${esc(p.full_name)}</div>
+    <div class="meta">${a?a+' · ':''}${p.gender==='male'?'ذكر':'أنثى'} · إضبارة ${esc(p.file_number)}</div>
+    <div class="meta">${esc(DEPTS[p.dept].name)} · اليوم ${dayNo(p.admission_date)}</div></div></div>
+  ${p.allergies ? `<div class="allergy" role="alert">${icon.warn}<span>حساسية: ${esc(p.allergies)}</span></div>` : ''}
+  <div style="height:12px"></div>
+  ${consultCard(c,false)}
+  <div class="card"><h3>التشخيص وسبب القبول</h3><p>${esc(p.admission_diagnosis||'—')}</p></div>
+  <div class="card"><h3>السوابق</h3>${hist ? `<dl class="dl">${hist}</dl>` : '<p class="when">لا يوجد</p>'}</div>
+  ${L ? `<div class="card"><h3>آخر علامات حيوية · ${ago(L.at)}</h3><p>ضغط ${L.sys??'–'}/${L.dia??'–'} · نبض ${L.hr??'–'} · حرارة ${L.t??'–'} · أكسجة ${L.spo2??'–'}%${L.uo!=null?' · بولي '+L.uo+' مل':''}</p></div>` : ''}
+  ${c.status==='pending' ? `<div class="card"><h3>الرد على الاستشارة</h3>${area('c_resp','الرأي والتوصيات','','التقييم، التوصيات، الأدوية المقترحة، المتابعة')}<div id="rerr" class="errmsg" role="alert"></div><button class="btn primary block" data-a="answerConsult" data-id="${c.id}" style="margin-top:6px">إرسال الرد</button></div>` : ''}`;
+}
+
 function queueView(){
   const mine = O.filter(o => o.type === (me().role==='lab'?'lab':'radiology'));
   const pend = mine.filter(o=>o.status==='pending').sort((a,b)=> (b.priority==='urgent')-(a.priority==='urgent') || a.at-b.at);
@@ -657,7 +753,7 @@ document.addEventListener('click', e => {
   if (a==='closeSheet'){ if (el.classList.contains('overlay') && e.target!==el) return; closeSheet(); return; }
   const v = view(), p = v.name==='patient' ? pById(v.id) : null;
   switch(a){
-    case 'login': S.user = +idv; S.stack = [{name: isDoc() ? 'list' : 'queue'}]; S.tab='admitted'; S.search=''; S.qtab='pending'; render(); break;
+    case 'login': S.user = +idv; S.stack = [{name: homeOf(me().role)}]; S.tab='admitted'; S.search=''; S.qtab='pending'; render(); break;
     case 'logout': S.user = null; S.stack = []; render(); break;
     case 'back': back(); break;
     case 'tab': S.tab = idv; render(); break;
@@ -685,6 +781,13 @@ document.addEventListener('click', e => {
     case 'quickOrder': openSheet(`<h2>شو بدك تطلب؟</h2><div class="pick"><button class="btn primary" data-a="newOrder" data-id="lab">${icon.tube}طلب تحليل</button><button class="btn primary" data-a="newOrder" data-id="radiology">${icon.xray}طلب أشعة</button></div><div class="sheet-actions"><button class="btn" data-a="closeSheet">إلغاء</button></div>`); break;
     case 'newOrder': pending.order = []; pending.tests = new Set(); openSheet(orderForm(idv)); break;
     case 'toggleTest': { const on = !pending.tests.has(idv); on ? pending.tests.add(idv) : pending.tests.delete(idv); document.querySelectorAll('[data-a="toggleTest"]').forEach(c => { if (c.dataset.id===idv) c.setAttribute('aria-pressed', on); }); updateTsel(); break; }
+    case 'newConsult': openSheet(consultForm()); break;
+    case 'pickSpec': $('#c_spec').value = idv; document.querySelectorAll('[data-a="pickSpec"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); $('#c_other_wrap').hidden = idv!=='other'; if (idv==='other') $('#c_other').focus(); break;
+    case 'cprio': $('#c_prio').value = idv; document.querySelectorAll('[data-a="cprio"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); break;
+    case 'saveConsult': { const spec = $('#c_spec').value, q = $('#c_q').value.trim(), other = $('#c_other').value.trim(); const errs = []; if (!spec) errs.push('اختار الاختصاص'); if (spec==='other' && !other) errs.push('اكتب اسم الاختصاص'); if (!q) errs.push('اكتب سبب الاستشارة'); if (errs.length){ $('#ferr').textContent = errs.join('، ') + '.'; return; } addC({patient:p.id, spec, other, by:me().id, at:Date.now(), priority:$('#c_prio').value, question:q}); closeSheet(); S.ptab='consult'; toast('انبعتت الاستشارة'); render(); break; }
+    case 'cancelConsult': { cById(idv).status = 'cancelled'; toast('انلغت الاستشارة'); render(); break; }
+    case 'openConsult': go({name:'consult', id:+idv}); break;
+    case 'answerConsult': { const c = cById(idv); const t = $('#c_resp').value.trim(); if (!t){ $('#rerr').textContent = 'اكتب الرد أول.'; return; } Object.assign(c, {status:'answered', response:t, responded_by:me().id, responded_at:Date.now(), seen:false}); toast('انبعت الرد للطبيب'); back(); break; }
     case 'prio': $('#o_prio').value = idv; document.querySelectorAll('[data-a="prio"]').forEach(c=>c.setAttribute('aria-pressed', c===el)); break;
     case 'saveOrder': { const t = $('#o_text').value.trim(); if(!t && !pending.order.length && !pending.tests.size){ $('#ferr').textContent='اختار تحليل أو اكتب الطلب أو ارفق صورة.'; return; } const type = $('#o_type').value; addO({patient:p.id, type, by:me().id, at:Date.now(), priority:$('#o_prio').value, tests:type==='lab'?[...pending.tests]:[], request_text:t, request_files:pending.order.slice()}); closeSheet(); S.ptab = type==='lab' ? 'lab' : 'rad'; toast(type==='lab'?'انبعت الطلب للمخبر':'انبعت الطلب للأشعة'); render(); break; }
     case 'cancelOrder': { const o = oById(idv); o.status='cancelled'; toast('انلغى الطلب'); render(); break; }
